@@ -203,11 +203,29 @@
           <div>
             <div class="period-title">午前（2時間）</div>
             <select id="work-am"></select>
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+              <span style="font-size:12px;color:var(--text-muted);min-width:52px;">作業時間</span>
+              <div style="display:flex;gap:4px;">
+                <button class="time-btn" id="tam-05" onclick="setTime('am',0.5)">0.5h</button>
+                <button class="time-btn" id="tam-10" onclick="setTime('am',1.0)">1.0h</button>
+                <button class="time-btn" id="tam-15" onclick="setTime('am',1.5)">1.5h</button>
+                <button class="time-btn active" id="tam-20" onclick="setTime('am',2.0)">2.0h</button>
+              </div>
+            </div>
             <div id="ratings-am"></div>
           </div>
           <div>
             <div class="period-title">午後（2時間）</div>
             <select id="work-pm"></select>
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+              <span style="font-size:12px;color:var(--text-muted);min-width:52px;">作業時間</span>
+              <div style="display:flex;gap:4px;">
+                <button class="time-btn" id="tpm-05" onclick="setTime('pm',0.5)">0.5h</button>
+                <button class="time-btn" id="tpm-10" onclick="setTime('pm',1.0)">1.0h</button>
+                <button class="time-btn" id="tpm-15" onclick="setTime('pm',1.5)">1.5h</button>
+                <button class="time-btn active" id="tpm-20" onclick="setTime('pm',2.0)">2.0h</button>
+              </div>
+            </div>
             <div id="ratings-pm"></div>
           </div>
         </div>

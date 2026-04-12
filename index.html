@@ -171,7 +171,8 @@
     <div class="card-title">入力する日付</div>
     <div style="display:flex;align-items:center;gap:8px;">
       <button style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:16px;cursor:pointer;" onclick="changeInputDate(-1)">＜</button>
-      <input type="date" id="input-date" style="flex:1;font-size:14px;font-weight:600;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:inherit;text-align:center;" onchange="renderUserGrid()">
+      <input type="date" id="input-date" style="flex:1;font-size:14px;font-weight:600;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:inherit;text-align:center;" onchange="renderUserGrid();updateDateLabel()">
+      <span id="date-weekday" style="font-size:14px;font-weight:600;color:var(--primary);min-width:32px;"></span>
       <button style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:16px;cursor:pointer;" onclick="changeInputDate(1)">＞</button>
       <button style="font-size:11px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--primary);cursor:pointer;font-family:inherit;" onclick="setToday()">今日</button>
     </div>
@@ -369,6 +370,7 @@ async function init() {
   updateMonthLabel();
   const di = document.getElementById('input-date');
   if(di) di.value = getTodayKey();
+  updateDateLabel();
   showToast('データを読み込んでいます…');
   try {
     const [membersRes, settingsRes] = await Promise.all([
@@ -553,6 +555,15 @@ function getSelectedDateKey() {
   return (el && el.value) ? el.value : getTodayKey();
 }
 
+function updateDateLabel() {
+  const key = getSelectedDateKey();
+  const parts = key.split('-');
+  const d = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+  const days = ['日','月','火','水','木','金','土'];
+  const label = document.getElementById('date-weekday');
+  if(label) label.textContent = '（' + days[d.getDay()] + '）';
+}
+
 function changeInputDate(dir) {
   const parts = getSelectedDateKey().split('-');
   const current = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
@@ -564,11 +575,13 @@ function changeInputDate(dir) {
   const m = String(current.getMonth()+1).padStart(2,'0');
   const d = String(current.getDate()).padStart(2,'0');
   document.getElementById('input-date').value = y+'-'+m+'-'+d;
+  updateDateLabel();
   renderUserGrid();
 }
 
 function setToday() {
   document.getElementById('input-date').value = getTodayKey();
+  updateDateLabel();
   renderUserGrid();
 }
 

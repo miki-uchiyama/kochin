@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>工賃管理システム</title>
+<style>
+  :root {
+    --primary: #1a56a0;
+    --primary-light: #e8f0fb;
+    --success: #0f6e56;
+    --success-light: #e1f5ee;
+    --danger: #a32d2d;
+    --danger-light: #fcebeb;
+    --text: #1a1a1a;
+    --text-muted: #666;
+    --text-hint: #999;
+    --border: #e0e0e0;
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+  
+  /* NAVBAR */
+  .navbar { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 16px; display: flex; align-items: center; justify-content: space-between; height: 52px; position: sticky; top: 0; z-index: 100; }
+  .navbar-title { font-size: 16px; font-weight: 600; color: var(--text); }
+  .navbar-date { font-size: 12px; color: var(--text-muted); }
+
+  /* BOTTOM NAV */
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 4px; cursor: pointer; color: var(--text-hint); font-size: 10px; gap: 3px; border: none; background: none; }
+  .nav-item.active { color: var(--primary); }
+  .nav-icon { width: 22px; height: 22px; }
+
+  /* SCREENS */
+  .screen { display: none; padding: 16px 16px 80px; }
+  .screen.active { display: block; }
+
+  /* CARDS */
+  .card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 16px; margin-bottom: 12px; }
+  .card-title { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* SUMMARY CARDS */
+  .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .summary-card { background: var(--card); border-radius: var(--radius-sm); border: 1px solid var(--border); padding: 12px 8px; text-align: center; }
+  .summary-label { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
+  .summary-value { font-size: 17px; font-weight: 700; color: var(--text); }
+
+  /* USER LIST */
+  .user-card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 14px 16px; margin-bottom: 8px; cursor: pointer; }
+  .user-card-header { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--primary-light); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--primary); flex-shrink: 0; }
+  .user-info { flex: 1; }
+  .user-name { font-size: 14px; font-weight: 600; }
+  .user-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .user-total { font-size: 16px; font-weight: 700; color: var(--success); }
+  .user-detail { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .user-card.open .user-detail { display: block; }
+  .detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .detail-item { background: var(--bg); border-radius: var(--radius-sm); padding: 8px 10px; }
+  .detail-label { font-size: 10px; color: var(--text-muted); }
+  .detail-value { font-size: 13px; font-weight: 600; margin-top: 2px; }
+
+  /* MONTH NAV */
+  .month-nav { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 14px; }
+  .month-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .month-label { font-size: 15px; font-weight: 600; }
+
+  /* INPUT SCREEN */
+  .user-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .user-btn { border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--card); color: var(--text); padding: 12px 6px; font-size: 13px; cursor: pointer; text-align: center; font-family: inherit; line-height: 1.3; }
+  .user-btn:active { background: var(--primary-light); }
+  .user-btn.done { background: var(--success-light); border-color: #9fe1cb; color: var(--success); }
+  .user-btn.absent { opacity: 0.4; text-decoration: line-through; font-size: 11px; }
+
+  .back-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .back-btn { border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--card); color: var(--text-muted); padding: 6px 12px; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .selected-name { font-size: 15px; font-weight: 600; flex: 1; }
+  .absent-btn { border-radius: 20px; padding: 5px 14px; font-size: 12px; cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--text-muted); font-family: inherit; }
+  .absent-btn.on { background: var(--danger-light); color: var(--danger); border-color: #f09595; }
+
+  .period-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+  .half-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  select { width: 100%; font-size: 12px; padding: 7px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--card); color: var(--text); font-family: inherit; margin-bottom: 10px; }
+
+  .rating-block { margin-bottom: 8px; }
+  .rating-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+  .rating-label { font-size: 12px; color: var(--text); flex: 1; font-weight: 500; }
+  .rating-btns { display: flex; gap: 3px; }
+  .r-btn { width: 28px; height: 28px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 12px; cursor: pointer; font-family: inherit; }
+  .r-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .criteria-text { font-size: 10px; color: var(--text-hint); line-height: 1.6; padding-left: 2px; }
+
+  .save-btn { width: 100%; padding: 15px; border-radius: var(--radius); background: var(--primary); color: #fff; border: none; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 4px; }
+  .save-btn:active { opacity: 0.85; }
+  .save-btn.danger { background: var(--danger); }
+
+  /* SETTINGS */
+  .tabs { display: flex; background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 4px; gap: 4px; margin-bottom: 12px; }
+  .tab-btn { flex: 1; padding: 8px 4px; font-size: 12px; text-align: center; cursor: pointer; border-radius: var(--radius-sm); border: none; background: none; color: var(--text-muted); font-family: inherit; }
+  .tab-btn.active { background: var(--primary); color: #fff; font-weight: 600; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .form-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .form-label { font-size: 13px; color: var(--text-muted); min-width: 90px; }
+  .form-input { flex: 1; font-size: 13px; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font-family: inherit; max-width: 110px; }
+  .form-unit { font-size: 12px; color: var(--text-muted); }
+
+  .member-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .member-item:last-child { border-bottom: none; }
+  .member-name { flex: 1; font-size: 14px; }
+  .del-btn { border: 1px solid #f09595; border-radius: var(--radius-sm); background: none; color: var(--danger); font-size: 12px; padding: 4px 10px; cursor: pointer; font-family: inherit; }
+  .add-btn { width: 100%; padding: 10px; border: 1px dashed var(--border); border-radius: var(--radius-sm); background: none; color: var(--primary); font-size: 13px; cursor: pointer; margin-top: 8px; font-family: inherit; }
+
+  .group-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .group-row:last-child { border-bottom: none; }
+  .group-num { font-size: 11px; color: var(--text-muted); min-width: 52px; }
+  .group-coef-input { width: 60px; font-size: 13px; font-weight: 600; color: var(--primary); padding: 5px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); text-align: center; font-family: inherit; }
+  .group-name-text { font-size: 11px; color: var(--text); flex: 1; line-height: 1.4; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1a1a1a; color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 13px; opacity: 0; transition: all 0.3s; z-index: 200; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .notice { font-size: 11px; color: var(--text-hint); margin-top: 6px; line-height: 1.6; }
+  .badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--primary-light); color: var(--primary); margin-left: 4px; font-weight: 600; }
+  .section-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+  <span class="navbar-title" id="navbar-title">工賃管理</span>
+  <span class="navbar-date" id="navbar-date"></span>
+</div>
+
+<!-- SCREEN: 月次集計 -->
+<div id="screen-summary" class="screen active">
+  <div class="month-nav">
+    <button class="month-btn" onclick="changeMonth(-1)">＜</button>
+    <span class="month-label" id="month-label"></span>
+    <button class="month-btn" onclick="changeMonth(1)">＞</button>
+  </div>
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-label">対象人数</div>
+      <div class="summary-value" id="sum-count">0人</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">工賃総額</div>
+      <div class="summary-value" style="font-size:13px;" id="sum-total">0円</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">平均工賃</div>
+      <div class="summary-value" style="font-size:13px;" id="sum-avg">0円</div>
+    </div>
+  </div>
+  <div id="user-summary-list"></div>
+  <p class="notice" style="text-align:center;">※ データはGoogleスプレッドシートと連携後に表示されます</p>
+</div>
+
+<!-- SCREEN: 日々入力 -->
+<div id="screen-input" class="screen">
+  <!-- 日付選択 -->
+  <div class="card" style="margin-bottom:12px;">
+    <div class="card-title">入力する日付</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:16px;cursor:pointer;" onclick="changeInputDate(-1)">＜</button>
+      <input type="date" id="input-date" style="flex:1;font-size:14px;font-weight:600;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:inherit;text-align:center;" onchange="renderUserGrid()">
+      <button style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:16px;cursor:pointer;" onclick="changeInputDate(1)">＞</button>
+      <button style="font-size:11px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--primary);cursor:pointer;font-family:inherit;" onclick="setToday()">今日</button>
+    </div>
+  </div>
+
+  <!-- 利用者選択 -->
+  <div id="view-select">
+    <div class="card">
+      <div class="card-title">利用者を選んでください</div>
+      <div class="user-grid" id="user-grid"></div>
+    </div>
+  </div>
+
+  <!-- 入力フォーム -->
+  <div id="view-form" style="display:none;">
+    <div class="back-row">
+      <button class="back-btn" onclick="backToSelect()">＜ 戻る</button>
+      <span class="selected-name" id="form-name"></span>
+      <button class="absent-btn" id="absent-toggle" onclick="toggleAbsent()">欠席にする</button>
+    </div>
+
+    <div id="form-main">
+      <div class="card">
+        <div class="card-title">作業・評価</div>
+        <div class="half-grid">
+          <div>
+            <div class="period-title">午前（2時間）</div>
+            <select id="work-am"></select>
+            <div id="ratings-am"></div>
+          </div>
+          <div>
+            <div class="period-title">午後（2時間）</div>
+            <select id="work-pm"></select>
+            <div id="ratings-pm"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">生活態度</div>
+        <div id="ratings-life"></div>
+      </div>
+      <button class="save-btn" onclick="saveRecord()">保存する</button>
+    </div>
+
+    <div id="form-absent" style="display:none;">
+      <div class="card">
+        <div class="card-title">欠席理由（任意）</div>
+        <select id="absent-reason">
+          <option>私用</option>
+          <option>体調不良</option>
+          <option>通院</option>
+          <option>その他</option>
+        </select>
+      </div>
+      <button class="save-btn danger" onclick="saveAbsent()">欠席で保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: 設定 -->
+<div id="screen-settings" class="screen">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('members')">利用者</button>
+    <button class="tab-btn" onclick="switchTab('basic')">基本給</button>
+    <button class="tab-btn" onclick="switchTab('price')">単価</button>
+    <button class="tab-btn" onclick="switchTab('groups')">作業</button>
+  </div>
+
+  <!-- 利用者タブ -->
+  <div id="tab-members" class="tab-panel active">
+    <div class="card">
+      <div class="card-title">登録利用者 <span class="badge" id="member-count">0名</span></div>
+      <div id="member-list"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <input type="text" id="new-member" placeholder="利用者名を入力" style="flex:1;font-size:13px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:inherit;">
+        <button class="save-btn" style="width:auto;padding:8px 16px;font-size:13px;" onclick="addMember()">追加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 基本給タブ -->
+  <div id="tab-basic" class="tab-panel">
+    <div class="card">
+      <div class="card-title">基本給（日額）</div>
+      <div class="form-row"><span class="form-label">欠席0〜2日</span><input type="number" class="form-input" id="basic1" value="350"><span class="form-unit">円/日</span></div>
+      <div class="form-row"><span class="form-label">欠席3〜5日</span><input type="number" class="form-input" id="basic2" value="300"><span class="form-unit">円/日</span></div>
+      <div class="form-row"><span class="form-label">欠席6日以上</span><input type="number" class="form-input" id="basic3" value="250"><span class="form-unit">円/日</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">精勤手当（月額）</div>
+      <div class="form-row"><span class="form-label">欠席0〜2日</span><input type="number" class="form-input" id="seikinn1" value="2000"><span class="form-unit">円/月</span></div>
+      <div class="form-row"><span class="form-label">欠席3〜5日</span><input type="number" class="form-input" id="seikinn2" value="1000"><span class="form-unit">円/月</span></div>
+      <div class="form-row"><span class="form-label">欠席6日以上</span><input type="number" class="form-input" id="seikinn3" value="0"><span class="form-unit">円/月</span></div>
+    </div>
+    <button class="save-btn" onclick="saveSettings('basic')">保存する</button>
+  </div>
+
+  <!-- 単価タブ -->
+  <div id="tab-price" class="tab-panel">
+    <div class="card">
+      <div class="card-title">能力給単価</div>
+      <div class="form-row"><span class="form-label">1ポイントあたり</span><input type="number" class="form-input" id="unit-price" value="100"><span class="form-unit">円</span></div>
+      <p class="notice">単価を変えると全利用者の能力給計算に反映されます</p>
+    </div>
+    <button class="save-btn" onclick="saveSettings('price')">保存する</button>
+  </div>
+
+  <!-- 作業グループタブ -->
+  <div id="tab-groups" class="tab-panel">
+    <div class="card">
+      <div class="card-title">作業グループ・係数</div>
+      <div id="group-list"></div>
+    </div>
+    <button class="save-btn" onclick="saveSettings('groups')">保存する</button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-item active" onclick="switchScreen('summary')" id="nav-summary">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    集計
+  </button>
+  <button class="nav-item" onclick="switchScreen('input')" id="nav-input">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+    日々入力
+  </button>
+  <button class="nav-item" onclick="switchScreen('settings')" id="nav-settings">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    設定
+  </button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== API =====
+const API_URL = 'https://script.google.com/macros/s/AKfycbwZnAnThHhDXjNFpvqLj7T-2LJ7gKo7oGXunbV3sR5TENOa1jPy4SDXgIER0IJuhM-c/exec';
+
+async function apiPost(data) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+async function apiGet(params) {
+  const url = API_URL + '?' + new URLSearchParams(params);
+  const res = await fetch(url);
+  return res.json();
+}
+
+// ===== DATA =====
+let state = {
+  currentMonth: new Date(),
+  selectedUser: null,
+  isAbsent: false,
+  members: ['田中 花子','鈴木 太郎','佐藤 次郎','山田 幸子','中村 健一','高橋 明','伊藤 美咲','渡辺 隆','小林 恵'],
+  groups: [
+    { id:1, coef:2.4, name:'弁当A・縫製作業A' },
+    { id:2, coef:2.0, name:'PC作業A・販売' },
+    { id:3, coef:1.7, name:'弁当B・農作業A・干し芋製造A' },
+    { id:4, coef:1.4, name:'PC作業B・縫製作業B・干し芋袋詰めA' },
+    { id:5, coef:1.2, name:'ちっちゃいもA・イラストA・干し芋製造B' },
+    { id:6, coef:1.0, name:'農作業B・干し芋袋詰めB・ちっちゃいもB' },
+    { id:7, coef:0.8, name:'イラストB・軽作業・縫製作業C' },
+  ],
+  settings: { basic:[350,300,250], seikinn:[2000,1000,0], unitPrice:100 },
+  records: {},
+  ratings: { am:{}, pm:{}, life:{} },
+};
+
+const workItems = ['集中力','正確さ','スピード','指示理解','協調性'];
+const lifeItems = ['挨拶','返事','言葉遣い','ルール遵守'];
+const workCriteria = {
+  '集中力':['全く集中できなかった','集中が長続きしなかった','時々集中が途切れた','よく集中していた','非常に高い集中力だった'],
+  '正確さ':['注意してもミスが多かった','時々ミスがあった','ほぼ正確にできた','丁寧でミスなくできた','完璧な正確さだった'],
+  'スピード':['非常に遅かった','遅れが目立った','スムーズに作業した','効率的だった','非常に効率的だった'],
+  '指示理解':['理解できなかった','繰り返し説明が必要だった','一応理解していた','内容を把握していた','即座に理解し行動できた'],
+  '協調性':['他者との関わり困難','声掛けが必要だった','無難に過ごしていた','自然に関われていた','積極的に周囲と協力できた'],
+};
+const lifeCriteria = {
+  '挨拶':['できない','自分からはできない','自分からできるが声が小さい','自分から挨拶できる','元気よく自分から挨拶できる'],
+  '返事':['できない','促されるとできる','返事はするが声が小さい','きちんと返事ができる','明るくはきはきと返事ができる'],
+  '言葉遣い':['改善しない','注意され改善するが繰り返す','注意され改善する','正しい言葉遣い','常に丁寧な言葉遣いができる'],
+  'ルール遵守':['注意を拒否した','注意をされると改善するが繰り返す','注意をされ改善した','きちんと守れた','率先してルールを守れた'],
+};
+
+// ===== INIT =====
+async function init() {
+  updateDate();
+  updateMonthLabel();
+  const di = document.getElementById('input-date');
+  if(di) di.value = getTodayKey();
+  showToast('データを読み込んでいます…');
+  try {
+    const [membersRes, settingsRes] = await Promise.all([
+      apiGet({ action: 'getMembers' }),
+      apiGet({ action: 'getSettings' }),
+    ]);
+    if(membersRes.status === 'ok') state.members = membersRes.members;
+    if(settingsRes.status === 'ok') {
+      const s = settingsRes.settings;
+      state.settings = { basic: s.basic, seikinn: s.seikinn, unitPrice: s.unitPrice };
+      state.groups = s.groups;
+      document.getElementById('basic1').value = s.basic[0];
+      document.getElementById('basic2').value = s.basic[1];
+      document.getElementById('basic3').value = s.basic[2];
+      document.getElementById('seikinn1').value = s.seikinn[0];
+      document.getElementById('seikinn2').value = s.seikinn[1];
+      document.getElementById('seikinn3').value = s.seikinn[2];
+      document.getElementById('unit-price').value = s.unitPrice;
+    }
+    await loadMonthRecords();
+    showToast('読み込み完了！');
+  } catch(e) {
+    showToast('オフラインモードで起動しました');
+  }
+  renderUserGrid();
+  renderMemberList();
+  renderGroupList();
+  renderWorkSelects();
+  renderRatings('ratings-am','am',workItems,workCriteria);
+  renderRatings('ratings-pm','pm',workItems,workCriteria);
+  renderRatings('ratings-life','life',lifeItems,lifeCriteria);
+  renderSummary();
+}
+
+async function loadMonthRecords() {
+  const monthKey = getMonthKey();
+  const res = await apiGet({ action: 'getRecords', month: monthKey });
+  if(res.status === 'ok') {
+    res.records.forEach(r => {
+      const key = r.date + '-' + r.name;
+      state.records[key] = r;
+    });
+  }
+}
+
+function updateDate() {
+  const now = new Date();
+  const days = ['日','月','火','水','木','金','土'];
+  document.getElementById('navbar-date').textContent =
+    `${now.getMonth()+1}月${now.getDate()}日（${days[now.getDay()]}）`;
+}
+
+// ===== NAVIGATION =====
+function switchScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  const titles = { summary:'月次集計', input:'日々入力', settings:'設定' };
+  document.getElementById('navbar-title').textContent = titles[name];
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// ===== MONTH NAV =====
+async function changeMonth(dir) {
+  state.currentMonth.setMonth(state.currentMonth.getMonth() + dir);
+  updateMonthLabel();
+  showToast('データを読み込んでいます…');
+  try {
+    await loadMonthRecords();
+  } catch(e) {}
+  renderSummary();
+}
+function updateMonthLabel() {
+  const m = state.currentMonth;
+  document.getElementById('month-label').textContent = `${m.getFullYear()}年${m.getMonth()+1}月`;
+}
+
+// ===== SUMMARY =====
+function renderSummary() {
+  const monthKey = getMonthKey();
+  const list = document.getElementById('user-summary-list');
+  list.innerHTML = '';
+  let totalAmount = 0;
+  let count = 0;
+  state.members.forEach(name => {
+    const records = getMonthRecords(name, monthKey);
+    if(records.length === 0) return;
+    count++;
+    const { basicTotal, seikinnTotal, nouryokuTotal, total, days, absenceDays } = calcMonthly(name, monthKey);
+    totalAmount += total;
+    const initials = name.slice(0,2);
+    const div = document.createElement('div');
+    div.className = 'user-card';
+    div.innerHTML = `
+      <div class="user-card-header" onclick="this.closest('.user-card').classList.toggle('open')">
+        <div class="avatar">${initials}</div>
+        <div class="user-info">
+          <div class="user-name">${name}</div>
+          <div class="user-sub">出席${days}日 / 欠席${absenceDays}日</div>
+        </div>
+        <div class="user-total">${total.toLocaleString()}円</div>
+      </div>
+      <div class="user-detail">
+        <div class="detail-grid">
+          <div class="detail-item"><div class="detail-label">基本給</div><div class="detail-value">${basicTotal.toLocaleString()}円</div></div>
+          <div class="detail-item"><div class="detail-label">精勤手当</div><div class="detail-value">${seikinnTotal.toLocaleString()}円</div></div>
+          <div class="detail-item"><div class="detail-label">能力給</div><div class="detail-value">${nouryokuTotal.toLocaleString()}円</div></div>
+          <div class="detail-item"><div class="detail-label">入力件数</div><div class="detail-value">${records.length}件</div></div>
+        </div>
+      </div>`;
+    list.appendChild(div);
+  });
+  document.getElementById('sum-count').textContent = count+'人';
+  document.getElementById('sum-total').textContent = totalAmount.toLocaleString()+'円';
+  document.getElementById('sum-avg').textContent = count > 0 ? Math.round(totalAmount/count).toLocaleString()+'円' : '0円';
+}
+
+function getMonthKey() {
+  const m = state.currentMonth;
+  return `${m.getFullYear()}-${String(m.getMonth()+1).padStart(2,'0')}`;
+}
+
+function getMonthRecords(name, monthKey) {
+  return Object.entries(state.records)
+    .filter(([k,v]) => k.startsWith(monthKey) && v.name === name)
+    .map(([k,v]) => v);
+}
+
+function calcMonthly(name, monthKey) {
+  const records = getMonthRecords(name, monthKey);
+  const s = state.settings;
+  let days = 0, absenceDays = 0, nouryokuTotal = 0;
+  records.forEach(r => {
+    if(r.absent) { absenceDays++; return; }
+    days++;
+    const amPt = r.amScores.reduce((a,b)=>a+b,0) * r.amCoef * 2;
+    const pmPt = r.pmScores.reduce((a,b)=>a+b,0) * r.pmCoef * 2;
+    const lifePt = r.lifeScores.reduce((a,b)=>a+b,0);
+    nouryokuTotal += Math.round((amPt + pmPt + lifePt) * s.unitPrice);
+  });
+  const absIdx = absenceDays <= 2 ? 0 : absenceDays <= 5 ? 1 : 2;
+  const basicTotal = s.basic[absIdx] * days;
+  const seikinnTotal = s.seikinn[absIdx];
+  const total = basicTotal + seikinnTotal + nouryokuTotal;
+  return { basicTotal, seikinnTotal, nouryokuTotal, total, days, absenceDays };
+}
+
+// ===== INPUT =====
+function renderUserGrid() {
+  const grid = document.getElementById('user-grid');
+  grid.innerHTML = '';
+  const dateKey = getSelectedDateKey();
+  state.members.forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 'user-btn';
+    const rec = state.records[dateKey+'-'+name];
+    if(rec) {
+      btn.className += rec.absent ? ' absent' : ' done';
+      btn.textContent = rec.absent ? name+'（欠席）' : name+'✓';
+    } else {
+      btn.textContent = name;
+    }
+    btn.onclick = () => openForm(name);
+    grid.appendChild(btn);
+  });
+}
+
+function getTodayKey() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+}
+
+function getSelectedDateKey() {
+  const el = document.getElementById('input-date');
+  return (el && el.value) ? el.value : getTodayKey();
+}
+
+function changeInputDate(dir) {
+  const parts = getSelectedDateKey().split('-');
+  const current = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+  current.setDate(current.getDate() + dir);
+  const todayParts = getTodayKey().split('-');
+  const today = new Date(parseInt(todayParts[0]), parseInt(todayParts[1])-1, parseInt(todayParts[2]));
+  if(current > today) return;
+  const y = current.getFullYear();
+  const m = String(current.getMonth()+1).padStart(2,'0');
+  const d = String(current.getDate()).padStart(2,'0');
+  document.getElementById('input-date').value = y+'-'+m+'-'+d;
+  renderUserGrid();
+}
+
+function setToday() {
+  document.getElementById('input-date').value = getTodayKey();
+  renderUserGrid();
+}
+
+function openForm(name) {
+  state.selectedUser = name;
+  state.isAbsent = false;
+  state.ratings = { am:{}, pm:{}, life:{} };
+  document.getElementById('form-name').textContent = name;
+  document.getElementById('absent-toggle').className = 'absent-btn';
+  document.getElementById('absent-toggle').textContent = '欠席にする';
+  document.getElementById('form-main').style.display = 'block';
+  document.getElementById('form-absent').style.display = 'none';
+  resetRatings('ratings-am','am',workItems);
+  resetRatings('ratings-pm','pm',workItems);
+  resetRatings('ratings-life','life',lifeItems);
+  document.getElementById('view-select').style.display = 'none';
+  document.getElementById('view-form').style.display = 'block';
+  window.scrollTo(0,0);
+}
+
+function backToSelect() {
+  document.getElementById('view-form').style.display = 'none';
+  document.getElementById('view-select').style.display = 'block';
+}
+
+function toggleAbsent() {
+  state.isAbsent = !state.isAbsent;
+  const btn = document.getElementById('absent-toggle');
+  if(state.isAbsent) {
+    btn.className = 'absent-btn on'; btn.textContent = '出席に戻す';
+    document.getElementById('form-main').style.display = 'none';
+    document.getElementById('form-absent').style.display = 'block';
+  } else {
+    btn.className = 'absent-btn'; btn.textContent = '欠席にする';
+    document.getElementById('form-main').style.display = 'block';
+    document.getElementById('form-absent').style.display = 'none';
+  }
+}
+
+async function saveRecord() {
+  const name = state.selectedUser;
+  const amCoef = parseFloat(document.getElementById('work-am').value);
+  const pmCoef = parseFloat(document.getElementById('work-pm').value);
+  const amScores = workItems.map(i => state.ratings.am[i]||0);
+  const pmScores = workItems.map(i => state.ratings.pm[i]||0);
+  const lifeScores = lifeItems.map(i => state.ratings.life[i]||0);
+  const dateKey = getSelectedDateKey();
+  const key = dateKey+'-'+name;
+  const record = { name, date: dateKey, absent:false, amCoef, pmCoef, amScores, pmScores, lifeScores };
+  state.records[key] = record;
+  renderUserGrid();
+  renderSummary();
+  backToSelect();
+  try {
+    await apiPost({ action: 'saveRecord', ...record });
+    showToast(name+'のデータを保存しました');
+  } catch(e) {
+    showToast(name+'を保存しました（オフライン）');
+  }
+}
+
+async function saveAbsent() {
+  const name = state.selectedUser;
+  const reason = document.getElementById('absent-reason').value;
+  const dateKey = getSelectedDateKey();
+  const key = dateKey+'-'+name;
+  const record = { name, date: dateKey, absent:true, reason };
+  state.records[key] = record;
+  renderUserGrid();
+  renderSummary();
+  backToSelect();
+  try {
+    await apiPost({ action: 'saveRecord', ...record });
+    showToast(name+'を欠席登録しました');
+  } catch(e) {
+    showToast(name+'を登録しました（オフライン）');
+  }
+}
+
+// ===== RATINGS =====
+function renderWorkSelects() {
+  ['work-am','work-pm'].forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = '';
+    state.groups.forEach(g => {
+      const opt = document.createElement('option');
+      opt.value = g.coef;
+      opt.textContent = `G${g.id}（×${g.coef}）${g.name}`;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+function renderRatings(containerId, category, items, criteriaMap) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  items.forEach(item => {
+    const criteria = criteriaMap[item];
+    const block = document.createElement('div');
+    block.className = 'rating-block';
+    block.innerHTML = `
+      <div class="rating-row">
+        <span class="rating-label">${item}</span>
+        <div class="rating-btns">${[1,2,3,4,5].map(n=>`<button class="r-btn" id="rb_${category}_${item}_${n}" onclick="setRating('${category}','${item}',${n})">${n}</button>`).join('')}</div>
+      </div>
+      <div class="criteria-text">${criteria.map((c,i)=>`${i+1}:${c}`).join('　')}</div>`;
+    el.appendChild(block);
+  });
+}
+
+function resetRatings(containerId, category, items) {
+  items.forEach(item => {
+    state.ratings[category][item] = 0;
+    [1,2,3,4,5].forEach(n => {
+      const btn = document.getElementById(`rb_${category}_${item}_${n}`);
+      if(btn) btn.className = 'r-btn';
+    });
+  });
+}
+
+function setRating(cat, item, val) {
+  state.ratings[cat][item] = val;
+  [1,2,3,4,5].forEach(n => {
+    const btn = document.getElementById(`rb_${cat}_${item}_${n}`);
+    if(btn) btn.className = n===val ? 'r-btn active' : 'r-btn';
+  });
+}
+
+// ===== SETTINGS =====
+function renderMemberList() {
+  const list = document.getElementById('member-list');
+  list.innerHTML = '';
+  document.getElementById('member-count').textContent = state.members.length+'名';
+  state.members.forEach((name, idx) => {
+    const div = document.createElement('div');
+    div.className = 'member-item';
+    div.innerHTML = `<span class="member-name">${name}</span><button class="del-btn" onclick="deleteMember(${idx})">削除</button>`;
+    list.appendChild(div);
+  });
+}
+
+async function addMember() {
+  const input = document.getElementById('new-member');
+  const name = input.value.trim();
+  if(!name) return;
+  state.members.push(name);
+  input.value = '';
+  renderMemberList();
+  renderUserGrid();
+  try {
+    await apiPost({ action: 'saveMembers', members: state.members });
+    showToast(name+'を追加しました');
+  } catch(e) {
+    showToast(name+'を追加しました（オフライン）');
+  }
+}
+
+async function deleteMember(idx) {
+  if(!confirm(state.members[idx]+'を削除しますか？')) return;
+  state.members.splice(idx, 1);
+  renderMemberList();
+  renderUserGrid();
+  try {
+    await apiPost({ action: 'saveMembers', members: state.members });
+    showToast('削除しました');
+  } catch(e) {
+    showToast('削除しました（オフライン）');
+  }
+}
+
+function renderGroupList() {
+  const list = document.getElementById('group-list');
+  list.innerHTML = '';
+  state.groups.forEach((g, idx) => {
+    const div = document.createElement('div');
+    div.className = 'group-row';
+    div.innerHTML = `
+      <span class="group-num">グループ${g.id}</span>
+      <input type="number" class="group-coef-input" value="${g.coef}" step="0.1" onchange="state.groups[${idx}].coef=parseFloat(this.value)">
+      <span class="group-name-text">${g.name}</span>`;
+    list.appendChild(div);
+  });
+}
+
+async function saveSettings(type) {
+  if(type === 'basic') {
+    state.settings.basic = [
+      parseInt(document.getElementById('basic1').value),
+      parseInt(document.getElementById('basic2').value),
+      parseInt(document.getElementById('basic3').value),
+    ];
+    state.settings.seikinn = [
+      parseInt(document.getElementById('seikinn1').value),
+      parseInt(document.getElementById('seikinn2').value),
+      parseInt(document.getElementById('seikinn3').value),
+    ];
+  } else if(type === 'price') {
+    state.settings.unitPrice = parseInt(document.getElementById('unit-price').value);
+  } else if(type === 'groups') {
+    renderWorkSelects();
+  }
+  renderSummary();
+  try {
+    await apiPost({ action: 'saveSettings', settings: { ...state.settings, groups: state.groups } });
+    showToast('設定を保存しました');
+  } catch(e) {
+    showToast('設定を保存しました（オフライン）');
+  }
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+init();
+</script>
+</body>
+</html>

@@ -338,12 +338,17 @@ async function apiGet(params) {
 }
 
 async function apiPost(data) {
-  // 配列はJSON文字列に変換してGETで送る
   const p = {};
   for(const k in data) {
-    p[k] = Array.isArray(data[k]) ? JSON.stringify(data[k]) : data[k];
+    if(Array.isArray(data[k])) {
+      p[k] = JSON.stringify(data[k]);
+    } else if(data[k] !== null && typeof data[k] === 'object') {
+      p[k] = JSON.stringify(data[k]);
+    } else {
+      p[k] = data[k];
+    }
   }
-  if(typeof p.settings === 'object') p.settings = JSON.stringify(p.settings);
+  console.log('apiPost sending:', p);
   return jsonp(p);
 }
 

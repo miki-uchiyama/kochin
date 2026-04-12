@@ -372,7 +372,8 @@ async function apiPost(data) {
 
 // ===== DATA =====
 let state = {
-  currentMonth: new Date(),
+  currentYear: new Date().getFullYear(),
+  currentMonthNum: new Date().getMonth()+1,
   selectedUser: null,
   isAbsent: false,
   members: ['田中 花子','鈴木 太郎','佐藤 次郎','山田 幸子','中村 健一','高橋 明','伊藤 美咲','渡辺 隆','小林 恵'],
@@ -485,7 +486,9 @@ function switchTab(name) {
 
 // ===== MONTH NAV =====
 async function changeMonth(dir) {
-  state.currentMonth.setMonth(state.currentMonth.getMonth() + dir);
+  state.currentMonthNum += dir;
+  if(state.currentMonthNum > 12) { state.currentMonthNum = 1; state.currentYear++; }
+  if(state.currentMonthNum < 1) { state.currentMonthNum = 12; state.currentYear--; }
   updateMonthLabel();
   showToast('データを読み込んでいます…');
   try {
@@ -494,8 +497,7 @@ async function changeMonth(dir) {
   renderSummary();
 }
 function updateMonthLabel() {
-  const m = state.currentMonth;
-  document.getElementById('month-label').textContent = `${m.getFullYear()}年${m.getMonth()+1}月`;
+  document.getElementById('month-label').textContent = `${state.currentYear}年${state.currentMonthNum}月`;
 }
 
 // ===== SUMMARY =====
@@ -539,8 +541,7 @@ function renderSummary() {
 }
 
 function getMonthKey() {
-  const m = state.currentMonth;
-  return `${m.getFullYear()}-${String(m.getMonth()+1).padStart(2,'0')}`;
+  return `${state.currentYear}-${String(state.currentMonthNum).padStart(2,'0')}`;
 }
 
 function getMonthRecords(name, monthKey) {

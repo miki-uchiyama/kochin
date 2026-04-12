@@ -129,6 +129,8 @@
   .notice { font-size: 11px; color: var(--text-hint); margin-top: 6px; line-height: 1.6; }
   .badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--primary-light); color: var(--primary); margin-left: 4px; font-weight: 600; }
   .section-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .time-btn { padding: 5px 8px; font-size: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text-muted); cursor: pointer; font-family: inherit; }
+  .time-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 </style>
 </head>
 <body>
@@ -366,6 +368,7 @@ let state = {
   settings: { basic:[350,300,250], seikinn:[2000,1000,0], unitPrice:100 },
   records: {},
   ratings: { am:{}, pm:{}, life:{} },
+  workHours: { am: 2.0, pm: 2.0 },
 };
 
 const workItems = ['集中力','正確さ','スピード','指示理解','協調性'];
@@ -533,8 +536,10 @@ function calcMonthly(name, monthKey) {
   records.forEach(r => {
     if(r.absent) { absenceDays++; return; }
     days++;
-    const amPt = r.amScores.reduce((a,b)=>a+b,0) * r.amCoef * 2;
-    const pmPt = r.pmScores.reduce((a,b)=>a+b,0) * r.pmCoef * 2;
+    const amH = r.amHours !== undefined ? parseFloat(r.amHours) : 2.0;
+    const pmH = r.pmHours !== undefined ? parseFloat(r.pmHours) : 2.0;
+    const amPt = r.amScores.reduce((a,b)=>a+b,0) * r.amCoef * amH;
+    const pmPt = r.pmScores.reduce((a,b)=>a+b,0) * r.pmCoef * pmH;
     const lifePt = r.lifeScores.reduce((a,b)=>a+b,0);
     nouryokuTotal += Math.round((amPt + pmPt + lifePt) * s.unitPrice);
   });
@@ -609,6 +614,15 @@ function openForm(name) {
   state.selectedUser = name;
   state.isAbsent = false;
   state.ratings = { am:{}, pm:{}, life:{} };
+  state.workHours = { am: 2.0, pm: 2.0 };
+  ['am','pm'].forEach(p => {
+    ['05','10','15','20'].forEach(v => {
+      const btn = document.getElementById('t'+p+'-'+v);
+      if(btn) btn.className = 'time-btn';
+    });
+    const btn = document.getElementById('t'+p+'-20');
+    if(btn) btn.className = 'time-btn active';
+  });
   document.getElementById('form-name').textContent = name;
   document.getElementById('absent-toggle').className = 'absent-btn';
   document.getElementById('absent-toggle').textContent = '欠席にする';
@@ -620,6 +634,18 @@ function openForm(name) {
   document.getElementById('view-select').style.display = 'none';
   document.getElementById('view-form').style.display = 'block';
   window.scrollTo(0,0);
+}
+
+function setTime(period, hours) {
+  state.workHours[period] = hours;
+  ['05','10','15','20'].forEach(v => {
+    const btn = document.getElementById('t'+period+'-'+v);
+    if(btn) btn.className = 'time-btn';
+  });
+  const key = String(hours).replace('.','');
+  const padded = key.length === 1 ? key+'0' : key;
+  const btn = document.getElementById('t'+period+'-'+padded);
+  if(btn) btn.className = 'time-btn active';
 }
 
 function backToSelect() {
@@ -650,7 +676,9 @@ async function saveRecord() {
   const lifeScores = lifeItems.map(i => state.ratings.life[i]||0);
   const dateKey = getSelectedDateKey();
   const key = dateKey+'-'+name;
-  const record = { name, date: dateKey, absent:false, amCoef, pmCoef, amScores, pmScores, lifeScores };
+  const amHours = state.workHours.am;
+  const pmHours = state.workHours.pm;
+  const record = { name, date: dateKey, absent:false, amCoef, pmCoef, amScores, pmScores, lifeScores, amHours, pmHours };
   state.records[key] = record;
   renderUserGrid();
   renderSummary();

@@ -504,6 +504,24 @@ function updateMonthLabel() {
 }
 
 // ===== SUMMARY =====
+async function refreshSummary() {
+  showToast('読み込んでいます…');
+  try {
+    const monthKey = getMonthKey();
+    const res = await apiGet({ action: 'getRecords', month: monthKey });
+    if(res.status === 'ok') {
+      res.records.forEach(r => {
+        const key = r.date + '-' + r.name;
+        state.records[key] = r;
+      });
+      showToast('読み込み完了！');
+    }
+  } catch(e) {
+    showToast('読み込みに失敗しました');
+  }
+  renderSummary();
+}
+
 function renderSummary() {
   const monthKey = getMonthKey();
   const list = document.getElementById('user-summary-list');

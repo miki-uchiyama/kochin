@@ -715,15 +715,31 @@ renderUserGrid();
 function openForm(name) {
   state.selectedUser = name;
   state.currentStep = 'attendance';
+  state.ratings = { am:{}, pm:{}, life:{} };
+  state.workHours = { am: 2.0, pm: 2.0 };
+  state.amAbsent = false;
+  state.pmAbsent = false;
   document.getElementById('form-name').textContent = name;
   document.getElementById('view-select').style.display = 'none';
   document.getElementById('view-form').style.display = 'block';
-  showStep('attendance');
   const dateKey = getSelectedDateKey();
   const rec = state.records[dateKey+'-'+name];
   document.getElementById('delete-btn-area').style.display = rec ? 'block' : 'none';
+  if(rec && !rec.absent) {
+    if(rec.amScores) rec.amScores.forEach((v,i) => { state.ratings.am[workItems[i]] = v; });
+    if(rec.pmScores) rec.pmScores.forEach((v,i) => { state.ratings.pm[workItems[i]] = v; });
+    if(rec.lifeScores) rec.lifeScores.forEach((v,i) => { state.ratings.life[lifeItems[i]] = v; });
+    if(rec.amHours) state.workHours.am = rec.amHours;
+    if(rec.pmHours) state.workHours.pm = rec.pmHours;
+  }
+  renderRatings('ratings-am','am',workItems,workCriteria);
+  renderRatings('ratings-pm','pm',workItems,workCriteria);
+  renderRatings('ratings-life','life',lifeItems,lifeCriteria);
+  renderWorkSelects();
+  showStep('attendance');
   window.scrollTo(0,0);
 }
+
 async function deleteRecord() {
   if(!confirm(state.selectedUser+'のデータを削除しますか？')) return;
   const dateKey = getSelectedDateKey();

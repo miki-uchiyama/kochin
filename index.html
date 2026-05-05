@@ -209,6 +209,9 @@
           <button class="save-btn danger" onclick="selectAttendance('absent')">欠席</button>
         </div>
       </div>
+      <div id="delete-btn-area" style="display:none;margin-top:8px;">
+        <button class="save-btn danger" onclick="deleteRecord()" style="opacity:0.7;">このデータを削除する</button>
+      </div>
     </div>
 
     <!-- ステップ2：午前 -->
@@ -704,15 +707,7 @@ function changeInputDate(dir) {
 function setToday() {
   document.getElementById('input-date').value = getTodayKey();
   updateDateLabel();
-  function openForm(name) {
-  state.selectedUser = name;
-  state.currentStep = 'attendance';
-  document.getElementById('form-name').textContent = name;
-  document.getElementById('view-select').style.display = 'none';
-  document.getElementById('view-form').style.display = 'block';
-  showStep('attendance');
-  window.scrollTo(0,0);
-}
+  
 
 renderUserGrid();
 }
@@ -724,8 +719,27 @@ function openForm(name) {
   document.getElementById('view-select').style.display = 'none';
   document.getElementById('view-form').style.display = 'block';
   showStep('attendance');
+  const dateKey = getSelectedDateKey();
+  const rec = state.records[dateKey+'-'+name];
+  document.getElementById('delete-btn-area').style.display = rec ? 'block' : 'none';
   window.scrollTo(0,0);
 }
+async function deleteRecord() {
+  if(!confirm(state.selectedUser+'のデータを削除しますか？')) return;
+  const dateKey = getSelectedDateKey();
+  const key = dateKey+'-'+state.selectedUser;
+  delete state.records[key];
+  renderUserGrid();
+  renderSummary();
+  backToSelect();
+  try {
+    await apiPost({ action: 'deleteRecord', name: state.selectedUser, date: dateKey });
+    showToast(state.selectedUser+'のデータを削除しました');
+  } catch(e) {
+    showToast(state.selectedUser+'のデータを削除しました（オフライン）');
+  }
+}
+
 
 function showStep(step) {
   state.currentStep = step;

@@ -809,10 +809,9 @@ async function saveRecord() {
 
 async function saveAbsent() {
   const name = state.selectedUser;
-  const reason = document.getElementById('absent-reason').value;
   const dateKey = getSelectedDateKey();
   const key = dateKey+'-'+name;
-  const record = { name, date: dateKey, absent:true, reason };
+  const record = { name, date: dateKey, absent:true };
   state.records[key] = record;
   renderUserGrid();
   renderSummary();

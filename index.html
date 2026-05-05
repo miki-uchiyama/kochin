@@ -73,6 +73,7 @@
   .user-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .user-btn { border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--card); color: var(--text); padding: 12px 6px; font-size: 13px; cursor: pointer; text-align: center; font-family: inherit; line-height: 1.3; }
   .user-btn:active { background: var(--primary-light); }
+  .user-btn.partial { background: #fff8e1; border-color: #ffd54f; color: #8a6d00; }
   .user-btn.done { background: var(--success-light); border-color: #9fe1cb; color: var(--success); }
   .user-btn.absent { opacity: 0.4; text-decoration: line-through; font-size: 11px; }
 
@@ -197,65 +198,80 @@
     <div class="back-row">
       <button class="back-btn" onclick="backToSelect()">＜ 戻る</button>
       <span class="selected-name" id="form-name"></span>
-      <button class="absent-btn" id="absent-toggle" onclick="toggleAbsent()">欠席にする</button>
     </div>
 
-    <div id="form-main">
+    <!-- ステップ1：出欠確認 -->
+    <div id="step-attendance">
       <div class="card">
-        <div class="card-title">作業・評価</div>
-        <div class="half-grid">
-          <div>
-            <div class="period-title">午前（2時間）</div>
-            <select id="work-am"></select>
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
-              <span style="font-size:12px;color:var(--text-muted);min-width:52px;">作業時間</span>
-              <div style="display:flex;gap:4px;">
-                <button class="time-btn" id="tam-05" onclick="setTime('am',0.5)">0.5h</button>
-                <button class="time-btn" id="tam-10" onclick="setTime('am',1.0)">1.0h</button>
-                <button class="time-btn" id="tam-15" onclick="setTime('am',1.5)">1.5h</button>
-                <button class="time-btn active" id="tam-20" onclick="setTime('am',2.0)">2.0h</button>
-              </div>
-            </div>
-            <div id="ratings-am"></div>
-          </div>
-          <div>
-            <div class="period-title">午後（2時間）</div>
-            <select id="work-pm"></select>
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
-              <span style="font-size:12px;color:var(--text-muted);min-width:52px;">作業時間</span>
-              <div style="display:flex;gap:4px;">
-                <button class="time-btn" id="tpm-05" onclick="setTime('pm',0.5)">0.5h</button>
-                <button class="time-btn" id="tpm-10" onclick="setTime('pm',1.0)">1.0h</button>
-                <button class="time-btn" id="tpm-15" onclick="setTime('pm',1.5)">1.5h</button>
-                <button class="time-btn active" id="tpm-20" onclick="setTime('pm',2.0)">2.0h</button>
-              </div>
-            </div>
-            <div id="ratings-pm"></div>
-          </div>
+        <div class="card-title">出欠確認</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <button class="save-btn" onclick="selectAttendance('present')" style="background:var(--success);">出席</button>
+          <button class="save-btn danger" onclick="selectAttendance('absent')">欠席</button>
         </div>
       </div>
+    </div>
+
+    <!-- ステップ2：午前 -->
+    <div id="step-am" style="display:none;">
+      <div class="card">
+        <div class="card-title">午前の入力</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <button class="save-btn" id="btn-am-present" onclick="selectAm('present')" style="background:var(--success);">出席</button>
+          <button class="save-btn" id="btn-am-absent" onclick="selectAm('absent')" style="background:var(--text-muted);">午前休み</button>
+        </div>
+        <div id="am-form">
+          <div class="period-title">作業グループ</div>
+          <select id="work-am"></select>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+            <span style="font-size:12px;color:var(--text-muted);min-width:52px;">作業時間</span>
+            <div style="display:flex;gap:4px;">
+              <button class="time-btn" id="tam-05" onclick="setTime('am',0.5)">0.5h</button>
+              <button class="time-btn" id="tam-10" onclick="setTime('am',1.0)">1.0h</button>
+              <button class="time-btn" id="tam-15" onclick="setTime('am',1.5)">1.5h</button>
+              <button class="time-btn active" id="tam-20" onclick="setTime('am',2.0)">2.0h</button>
+            </div>
+          </div>
+          <div id="ratings-am"></div>
+        </div>
+      </div>
+      <button class="save-btn" onclick="saveAm()">午前を保存して午後へ</button>
+    </div>
+
+    <!-- ステップ3：午後 -->
+    <div id="step-pm" style="display:none;">
+      <div class="card">
+        <div class="card-title">午後の入力</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <button class="save-btn" id="btn-pm-present" onclick="selectPm('present')" style="background:var(--success);">出席</button>
+          <button class="save-btn" id="btn-pm-absent" onclick="selectPm('absent')" style="background:var(--text-muted);">午後休み</button>
+        </div>
+        <div id="pm-form">
+          <div class="period-title">作業グループ</div>
+          <select id="work-pm"></select>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+            <span style="font-size:12px;color:var(--text-muted);min-width:52px;">作業時間</span>
+            <div style="display:flex;gap:4px;">
+              <button class="time-btn" id="tpm-05" onclick="setTime('pm',0.5)">0.5h</button>
+              <button class="time-btn" id="tpm-10" onclick="setTime('pm',1.0)">1.0h</button>
+              <button class="time-btn" id="tpm-15" onclick="setTime('pm',1.5)">1.5h</button>
+              <button class="time-btn active" id="tpm-20" onclick="setTime('pm',2.0)">2.0h</button>
+            </div>
+          </div>
+          <div id="ratings-pm"></div>
+        </div>
+      </div>
+      <button class="save-btn" onclick="savePm()">午後を保存して生活態度へ</button>
+    </div>
+
+    <!-- ステップ4：生活態度 -->
+    <div id="step-life" style="display:none;">
       <div class="card">
         <div class="card-title">生活態度</div>
         <div id="ratings-life"></div>
       </div>
-      <button class="save-btn" onclick="saveRecord()">保存する</button>
-    </div>
-
-    <div id="form-absent" style="display:none;">
-      <div class="card">
-        <div class="card-title">欠席理由（任意）</div>
-        <select id="absent-reason">
-          <option>私用</option>
-          <option>体調不良</option>
-          <option>精神的不調</option>
-          <option>通院</option>
-          <option>その他</option>
-        </select>
-      </div>
-      <button class="save-btn danger" onclick="saveAbsent()">欠席で保存する</button>
+      <button class="save-btn" onclick="saveLife()">生活態度を保存して完了</button>
     </div>
   </div>
-</div>
 
 <!-- SCREEN: 設定 -->
 <div id="screen-settings" class="screen">
@@ -633,8 +649,16 @@ function renderUserGrid() {
     btn.className = 'user-btn';
     const rec = state.records[dateKey+'-'+name];
     if(rec) {
-      btn.className += rec.absent ? ' absent' : ' done';
-      btn.textContent = rec.absent ? name+'（欠席）' : name+'✓';
+      if(rec.absent) {
+        btn.className += ' done';
+        btn.textContent = name+'（欠席）';
+      } else if(rec.completed) {
+        btn.className += ' done';
+        btn.textContent = name+'✓';
+      } else {
+        btn.className += ' partial';
+        btn.textContent = name+'…';
+      }
     } else {
       btn.textContent = name;
     }
@@ -680,33 +704,38 @@ function changeInputDate(dir) {
 function setToday() {
   document.getElementById('input-date').value = getTodayKey();
   updateDateLabel();
-  renderUserGrid();
+  function openForm(name) {
+  state.selectedUser = name;
+  state.currentStep = 'attendance';
+  document.getElementById('form-name').textContent = name;
+  document.getElementById('view-select').style.display = 'none';
+  document.getElementById('view-form').style.display = 'block';
+  showStep('attendance');
+  window.scrollTo(0,0);
+}
+
+renderUserGrid();
 }
 
 function openForm(name) {
   state.selectedUser = name;
-  state.isAbsent = false;
-  state.ratings = { am:{}, pm:{}, life:{} };
-  state.workHours = { am: 2.0, pm: 2.0 };
-  ['am','pm'].forEach(p => {
-    ['05','10','15','20'].forEach(v => {
-      const btn = document.getElementById('t'+p+'-'+v);
-      if(btn) btn.className = 'time-btn';
-    });
-    const btn = document.getElementById('t'+p+'-20');
-    if(btn) btn.className = 'time-btn active';
-  });
+  state.currentStep = 'attendance';
   document.getElementById('form-name').textContent = name;
-  document.getElementById('absent-toggle').className = 'absent-btn';
-  document.getElementById('absent-toggle').textContent = '欠席にする';
-  document.getElementById('form-main').style.display = 'block';
-  document.getElementById('form-absent').style.display = 'none';
-  resetRatings('ratings-am','am',workItems);
-  resetRatings('ratings-pm','pm',workItems);
-  resetRatings('ratings-life','life',lifeItems);
   document.getElementById('view-select').style.display = 'none';
   document.getElementById('view-form').style.display = 'block';
+  showStep('attendance');
   window.scrollTo(0,0);
+}
+
+function showStep(step) {
+  state.currentStep = step;
+  const dateKey = getSelectedDateKey();
+  const rec = state.records[dateKey+'-'+state.selectedUser] || {};
+
+  document.getElementById('step-attendance').style.display = step === 'attendance' ? 'block' : 'none';
+  document.getElementById('step-am').style.display = step === 'am' ? 'block' : 'none';
+  document.getElementById('step-pm').style.display = step === 'pm' ? 'block' : 'none';
+  document.getElementById('step-life').style.display = step === 'life' ? 'block' : 'none';
 }
 
 function setTime(period, hours) {
@@ -779,6 +808,88 @@ async function saveAbsent() {
     showToast(name+'を欠席登録しました');
   } catch(e) {
     showToast(name+'を登録しました（オフライン）');
+  }
+}
+
+// ===== STEP FUNCTIONS =====
+function selectAttendance(type) {
+  if(type === 'absent') {
+    saveAbsent();
+  } else {
+    state.ratings = { am:{}, pm:{}, life:{} };
+    state.workHours = { am: 2.0, pm: 2.0 };
+    state.amAbsent = false;
+    state.pmAbsent = false;
+    renderRatings('ratings-am','am',workItems,workCriteria);
+    renderRatings('ratings-pm','pm',workItems,workCriteria);
+    renderRatings('ratings-life','life',lifeItems,lifeCriteria);
+    renderWorkSelects();
+    showStep('am');
+  }
+}
+
+function selectAm(type) {
+  state.amAbsent = (type === 'absent');
+  const amForm = document.getElementById('am-form');
+  amForm.style.display = state.amAbsent ? 'none' : 'block';
+}
+
+function selectPm(type) {
+  state.pmAbsent = (type === 'absent');
+  const pmForm = document.getElementById('pm-form');
+  pmForm.style.display = state.pmAbsent ? 'none' : 'block';
+}
+
+function saveAm() {
+  const dateKey = getSelectedDateKey();
+  const key = dateKey+'-'+state.selectedUser;
+  if(!state.records[key]) state.records[key] = { name: state.selectedUser, date: dateKey, absent: false };
+  if(state.amAbsent) {
+    state.records[key].amCoef = 0;
+    state.records[key].amScores = [0,0,0,0,0];
+    state.records[key].amHours = 0;
+  } else {
+    state.records[key].amCoef = parseFloat(document.getElementById('work-am').value);
+    state.records[key].amScores = workItems.map(i => state.ratings.am[i]||0);
+    state.records[key].amHours = state.workHours.am;
+  }
+  renderUserGrid();
+  showStep('pm');
+  window.scrollTo(0,0);
+}
+
+function savePm() {
+  const dateKey = getSelectedDateKey();
+  const key = dateKey+'-'+state.selectedUser;
+  if(!state.records[key]) state.records[key] = { name: state.selectedUser, date: dateKey, absent: false };
+  if(state.pmAbsent) {
+    state.records[key].pmCoef = 0;
+    state.records[key].pmScores = [0,0,0,0,0];
+    state.records[key].pmHours = 0;
+  } else {
+    state.records[key].pmCoef = parseFloat(document.getElementById('work-pm').value);
+    state.records[key].pmScores = workItems.map(i => state.ratings.pm[i]||0);
+    state.records[key].pmHours = state.workHours.pm;
+  }
+  renderUserGrid();
+  showStep('life');
+  window.scrollTo(0,0);
+}
+
+async function saveLife() {
+  const dateKey = getSelectedDateKey();
+  const key = dateKey+'-'+state.selectedUser;
+  if(!state.records[key]) state.records[key] = { name: state.selectedUser, date: dateKey, absent: false };
+  state.records[key].lifeScores = lifeItems.map(i => state.ratings.life[i]||0);
+  state.records[key].completed = true;
+  renderUserGrid();
+  renderSummary();
+  backToSelect();
+  try {
+    await apiPost({ action: 'saveRecord', ...state.records[key] });
+    showToast(state.selectedUser+'の入力が完了しました');
+  } catch(e) {
+    showToast(state.selectedUser+'を保存しました（オフライン）');
   }
 }
 

@@ -850,14 +850,23 @@ function selectAttendance(type) {
   if(type === 'absent') {
     saveAbsent();
   } else {
-    state.ratings = { am:{}, pm:{}, life:{} };
-    state.workHours = { am: 2.0, pm: 2.0 };
+    const dateKey = getSelectedDateKey();
+    const rec = state.records[dateKey+'-'+state.selectedUser];
+    if(!rec) {
+      state.ratings = { am:{}, pm:{}, life:{} };
+      state.workHours = { am: 2.0, pm: 2.0 };
+    }
     state.amAbsent = false;
     state.pmAbsent = false;
     renderRatings('ratings-am','am',workItems,workCriteria);
     renderRatings('ratings-pm','pm',workItems,workCriteria);
     renderRatings('ratings-life','life',lifeItems,lifeCriteria);
     renderWorkSelects();
+    if(rec && !rec.absent) {
+      workItems.forEach(item => { if(state.ratings.am[item]) setRating('am',item,state.ratings.am[item]); });
+      workItems.forEach(item => { if(state.ratings.pm[item]) setRating('pm',item,state.ratings.pm[item]); });
+      lifeItems.forEach(item => { if(state.ratings.life[item]) setRating('life',item,state.ratings.life[item]); });
+    }
     showStep('am');
   }
 }

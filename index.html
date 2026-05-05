@@ -736,6 +736,11 @@ function openForm(name) {
   renderRatings('ratings-pm','pm',workItems,workCriteria);
   renderRatings('ratings-life','life',lifeItems,lifeCriteria);
   renderWorkSelects();
+  if(rec && !rec.absent) {
+    workItems.forEach(item => { if(state.ratings.am[item]) setRating('am',item,state.ratings.am[item]); });
+    workItems.forEach(item => { if(state.ratings.pm[item]) setRating('pm',item,state.ratings.pm[item]); });
+    lifeItems.forEach(item => { if(state.ratings.life[item]) setRating('life',item,state.ratings.life[item]); });
+  }
   showStep('attendance');
   window.scrollTo(0,0);
 }

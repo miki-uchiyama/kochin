@@ -145,6 +145,8 @@ async function dispatch(sql, payload) {
       return handleSaveMembers(sql, payload);
     case 'saveSettings':
       return handleSaveSettings(sql, payload);
+    case 'deleteRecord':
+      return handleDeleteRecord(sql, payload);
     default:
       throw new Error('不明な action: ' + (action || '(空)'));
   }
@@ -261,6 +263,22 @@ async function handleSaveSettings(sql, payload) {
   await sql.query(`UPDATE state SET settings = ($1)::jsonb WHERE id = 1;`, [
     JSON.stringify(settings),
   ]);
+  return {};
+}
+
+async function handleDeleteRecord(sql, payload) {
+  const name = String(payload.name ?? '').trim();
+  const date = String(payload.date ?? '').trim();
+
+  if (!name || !date) {
+    throw new Error('name と date は必須です');
+  }
+
+  await sql.query(
+    `DELETE FROM daily_records WHERE work_date = ($1)::date AND member_name = $2;`,
+    [date, name],
+  );
+
   return {};
 }
 

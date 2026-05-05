@@ -899,9 +899,11 @@ async function saveLife() {
   renderSummary();
   backToSelect();
   try {
+    console.log('保存データ:', state.records[key]);
     await apiPost({ action: 'saveRecord', ...state.records[key] });
     showToast(state.selectedUser+'の入力が完了しました');
   } catch(e) {
+    console.log('エラー:', e);
     showToast(state.selectedUser+'を保存しました（オフライン）');
   }
 }

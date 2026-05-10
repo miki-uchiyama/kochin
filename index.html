@@ -860,6 +860,8 @@ function openStep(step) {
     if(rec.lifeScores) rec.lifeScores.forEach((v,i) => { state.ratings.life[lifeItems[i]] = v; });
     if(rec.amHours) state.workHours.am = rec.amHours;
     if(rec.pmHours) state.workHours.pm = rec.pmHours;
+    if(rec.amCoef === 0) state.amAbsent = true;
+    if(rec.pmCoef === 0) state.pmAbsent = true;
   }
   document.getElementById('tam-05').classList.toggle('active', state.workHours.am === 0.5);
   document.getElementById('tam-10').classList.toggle('active', state.workHours.am === 1.0);

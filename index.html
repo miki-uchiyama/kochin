@@ -494,6 +494,7 @@ async function init() {
   renderRatings('ratings-pm','pm',workItems,workCriteria);
   renderRatings('ratings-life','life',lifeItems,lifeCriteria);
   renderSummary();
+  switchScreen('input');
 }
 
 async function loadMonthRecords() {
@@ -1082,11 +1083,11 @@ init();
 
 <!-- BOTTOM NAV -->
 <div class="bottom-nav">
-  <button class="nav-item active" onclick="switchScreen('summary')" id="nav-summary">
+  <button class="nav-item" onclick="switchScreen('summary')" id="nav-summary">
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
     集計
   </button>
-  <button class="nav-item" onclick="switchScreen('input')" id="nav-input">
+  <button class="nav-item active" onclick="switchScreen('input')" id="nav-input">
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
     日々入力
   </button>

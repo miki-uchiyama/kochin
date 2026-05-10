@@ -200,19 +200,21 @@
       <span class="selected-name" id="form-name"></span>
     </div>
 
-    <!-- ステップ1：出欠確認 -->
-    <div id="step-attendance">
-      <div class="card">
-        <div class="card-title">出欠確認</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <button class="save-btn" onclick="selectAttendance('present')" style="background:var(--success);">出席</button>
-          <button class="save-btn danger" onclick="selectAttendance('absent')">欠席</button>
-        </div>
-      </div>
-      <div id="delete-btn-area" style="display:none;margin-top:8px;">
-        <button class="save-btn danger" onclick="deleteRecord()" style="opacity:0.7;">このデータを削除する</button>
-      </div>
+<!-- ステップ１：入力種別選択 -->
+<div id="step-attendance">
+  <div class="card">
+    <div class="card-title">入力する項目を選んでください</div>
+    <div style="display:grid;grid-template-columns:1fr;gap:12px;">
+      <button class="save-btn" onclick="openStep('am')" style="background:#4a90d9;font-size:18px;">午前の作業</button>
+      <button class="save-btn" onclick="openStep('pm')" style="background:#e8832a;font-size:18px;">午後の作業</button>
+      <button class="save-btn" onclick="openStep('life')" style="background:#c8a800;font-size:18px;">生活態度</button>
+      <button class="save-btn danger" onclick="selectAttendance('absent')" style="background:#e06080;font-size:18px;">欠席</button>
     </div>
+  </div>
+  <div id="delete-btn-area" style="display:none;margin-top:8px;">
+    <button class="save-btn danger" onclick="deleteRecord()" style="opacity:0.7;">このデータを削除する</button>
+  </div>
+</div>
 
     <!-- ステップ2：午前 -->
     <div id="step-am" style="display:none;">
@@ -652,20 +654,18 @@ function renderUserGrid() {
     const btn = document.createElement('button');
     btn.className = 'user-btn';
     const rec = state.records[dateKey+'-'+name];
+    let badges = '';
     if(rec) {
       if(rec.absent) {
-        btn.className += ' done';
-        btn.textContent = name+'（欠席）';
-      } else if(rec.completed) {
-        btn.className += ' done';
-        btn.textContent = name+'✓';
+        badges = '<span style="background:#e06080;color:#fff;border-radius:4px;padding:1px 6px;font-size:11px;margin-left:4px;">欠席</span>';
+        btn.className += ' absent';
       } else {
-        btn.className += ' partial';
-        btn.textContent = name+'…';
+        if(rec.amCoef !== undefined) badges += '<span style="background:#4a90d9;color:#fff;border-radius:4px;padding:1px 6px;font-size:11px;margin-left:4px;">午前</span>';
+        if(rec.pmCoef !== undefined) badges += '<span style="background:#e8832a;color:#fff;border-radius:4px;padding:1px 6px;font-size:11px;margin-left:4px;">午後</span>';
+        if(rec.completed) badges += '<span style="background:#c8a800;color:#fff;border-radius:4px;padding:1px 6px;font-size:11px;margin-left:4px;">生活</span>';
       }
-    } else {
-      btn.textContent = name;
     }
+    btn.innerHTML = name + badges;
     btn.onclick = () => openForm(name);
     grid.appendChild(btn);
   });
@@ -847,6 +847,27 @@ async function saveAbsent() {
 }
 
 // ===== STEP FUNCTIONS =====
+function openStep(step) {
+  const dateKey = getSelectedDateKey();
+  const rec = state.records[dateKey+'-'+state.selectedUser];
+  if(!rec) {
+    state.ratings = { am:{}, pm:{}, life:{} };
+    state.workHours = { am: 2.0, pm: 2.0 };
+    state.amAbsent = false;
+    state.pmAbsent = false;
+  }
+  renderRatings('ratings-am','am',workItems,workCriteria);
+  renderRatings('ratings-pm','pm',workItems,workCriteria);
+  renderRatings('ratings-life','life',lifeItems,lifeCriteria);
+  renderWorkSelects();
+  if(rec && !rec.absent) {
+    workItems.forEach(item => { if(state.ratings.am[item]) setRating('am',item,state.ratings.am[item]); });
+    workItems.forEach(item => { if(state.ratings.pm[item]) setRating('pm',item,state.ratings.pm[item]); });
+    lifeItems.forEach(item => { if(state.ratings.life[item]) setRating('life',item,state.ratings.life[item]); });
+  }
+  showStep(step);
+}
+
 function selectAttendance(type) {
   if(type === 'absent') {
     saveAbsent();
@@ -899,7 +920,7 @@ function saveAm() {
     state.records[key].amHours = state.workHours.am;
   }
   renderUserGrid();
-  showStep('pm');
+  showStep('attendance');
   window.scrollTo(0,0);
 }
 
@@ -918,7 +939,7 @@ function savePm() {
     state.records[key].pmHours = state.workHours.pm;
   }
   renderUserGrid();
-  showStep('life');
+  showStep('attendance');
   window.scrollTo(0,0);
 }
 

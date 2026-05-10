@@ -863,6 +863,15 @@ function openStep(step) {
     }
   }
 
+  document.getElementById('tam-05').classList.toggle('active', state.workHours.am === 0.5);
+  document.getElementById('tam-10').classList.toggle('active', state.workHours.am === 1.0);
+  document.getElementById('tam-15').classList.toggle('active', state.workHours.am === 1.5);
+  document.getElementById('tam-20').classList.toggle('active', state.workHours.am === 2.0);
+  document.getElementById('tpm-05').classList.toggle('active', state.workHours.pm === 0.5);
+  document.getElementById('tpm-10').classList.toggle('active', state.workHours.pm === 1.0);
+  document.getElementById('tpm-15').classList.toggle('active', state.workHours.pm === 1.5);
+  document.getElementById('tpm-20').classList.toggle('active', state.workHours.pm === 2.0);  
+
   renderRatings('ratings-am','am',workItems,workCriteria);
   renderRatings('ratings-pm','pm',workItems,workCriteria);
   renderRatings('ratings-life','life',lifeItems,lifeCriteria);

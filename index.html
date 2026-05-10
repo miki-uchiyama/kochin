@@ -894,6 +894,7 @@ function saveAm() {
     state.records[key].amHours = 0;
   } else {
     state.records[key].amCoef = parseFloat(document.getElementById('work-am').value);
+    state.records[key].amGroup = document.getElementById('work-am').value;
     state.records[key].amScores = workItems.map(i => state.ratings.am[i]||0);
     state.records[key].amHours = state.workHours.am;
   }
@@ -912,6 +913,7 @@ function savePm() {
     state.records[key].pmHours = 0;
   } else {
     state.records[key].pmCoef = parseFloat(document.getElementById('work-pm').value);
+    state.records[key].pmGroup = document.getElementById('work-pm').value;
     state.records[key].pmScores = workItems.map(i => state.ratings.pm[i]||0);
     state.records[key].pmHours = state.workHours.pm;
   }
@@ -947,9 +949,15 @@ function renderWorkSelects() {
     state.groups.forEach(g => {
       const opt = document.createElement('option');
       opt.value = g.coef;
-      opt.textContent = `G${g.id}（×${g.coef}）${g.name}`;
+      opt.textContent = `G${g.id} (x${g.coef}) ${g.name}`;
       sel.appendChild(opt);
     });
+    const cat = id === 'work-am' ? 'am' : 'pm';
+    if(state.records[getSelectedDateKey()+'-'+state.selectedUser]) {
+      const rec = state.records[getSelectedDateKey()+'-'+state.selectedUser];
+      if(cat === 'am' && rec.amGroup) sel.value = rec.amGroup;
+      if(cat === 'pm' && rec.pmGroup) sel.value = rec.pmGroup;
+    }
   });
 }
 

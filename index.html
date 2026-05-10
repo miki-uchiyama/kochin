@@ -658,7 +658,7 @@ function renderUserGrid() {
     if(rec) {
       if(rec.absent) {
         badges = '<span style="background:#e06080;color:#fff;border-radius:4px;padding:1px 6px;font-size:11px;margin-left:4px;">欠席</span>';
-        btn.className += ' absent';
+
       } else {
         if(rec.amCoef !== undefined) badges += '<span style="background:#4a90d9;color:#fff;border-radius:4px;padding:1px 6px;font-size:11px;margin-left:4px;">午前</span>';
         if(rec.pmCoef !== undefined) badges += '<span style="background:#e8832a;color:#fff;border-radius:4px;padding:1px 6px;font-size:11px;margin-left:4px;">午後</span>';

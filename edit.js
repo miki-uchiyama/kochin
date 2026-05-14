@@ -133,7 +133,7 @@ function renderEditTable(records, date, period) {
     // 作業グループ
     html += `<td style="padding:8px;">
       <select id="edit-group-${p}-${i}" style="width:100%;font-size:12px;padding:4px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);">
-      ${getGroups().map(g => `<option value="${g.id}" ${String(r[prefix+'Group']) === String(g.id) ? 'selected' : ''}>G${g.id} (x${g.coef}) ${g.name}</option>`).join('')}
+      ${getGroups().map(g => `<option value="${g.id}" ${parseFloat(r[prefix+'Coef']) === parseFloat(g.coef) ? 'selected' : ''}>G${g.id} (x${g.coef}) ${g.name}</option>`).join('')}
       </select>
     </td>`;
 

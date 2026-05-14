@@ -118,7 +118,7 @@ function renderEditTable(records, date, period) {
     const absent = p === 'am' ? r.absent : r.pmAbsent;
     const group = p === 'am' ? (r.amGroup || '') : (r.pmGroup || '');
     const hours = p === 'am' ? (r.amHours || 2) : (r.pmHours || 2);
-    const scores = p === 'am' ? (r.amScores || null) : (r.pmScores || null);
+    const scores = p === 'am' ? (r.amScores && r.amScores.some(s => s > 0) ? r.amScores : null) : (r.pmScores && r.pmScores.some(s => s > 0) ? r.pmScores : null);
 
     html += `<tr style="border-bottom:1px solid var(--border);">`;
     html += `<td style="padding:8px;font-weight:600;">${r.name}</td>`;

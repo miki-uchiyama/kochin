@@ -118,7 +118,7 @@ function renderEditTable(records, date, period) {
     const absent = p === 'am' ? r.absent : r.pmAbsent;
     const group = p === 'am' ? (r.amGroup || '') : (r.pmGroup || '');
     const hours = p === 'am' ? (r.amHours || 2) : (r.pmHours || 2);
-    const scores = p === 'am' ? (r.amScores || [3,3,3,3,3]) : (r.pmScores || [3,3,3,3,3]);
+    const scores = p === 'am' ? (r.amScores || null) : (r.pmScores || null);
 
     html += `<tr style="border-bottom:1px solid var(--border);">`;
     html += `<td style="padding:8px;font-weight:600;">${r.name}</td>`;
@@ -146,10 +146,10 @@ function renderEditTable(records, date, period) {
 
     // スコア
     SCORE_LABELS.forEach((label, si) => {
-      const currentScore = scores[si] || 3;
+      const currentScore = scores ? (scores[si] || 0) : 0;
       html += `<td style="padding:8px;">
         <div style="display:flex;gap:2px;justify-content:center;">
-          ${[1,2,3,4,5].map(n => `<button onclick="selectEditScore(${i},'${p}',${si},${n})" id="edit-score-${p}-${i}-${si}-${n}" style="width:24px;height:24px;font-size:11px;border:1px solid var(--border);border-radius:50%;cursor:pointer;background:${currentScore === n ? 'var(--primary)' : 'var(--card)'};color:${currentScore === n ? '#fff' : 'var(--text)'};">${n}</button>`).join('')}
+        ${scores ? [1,2,3,4,5].map(n => `<button onclick="selectEditScore(${i},'${p}',${si},${n})" id="edit-score-${p}-${i}-${si}-${n}" style="width:24px;height:24px;font-size:11px;border:1px solid var(--border);border-radius:50%;cursor:pointer;background:${currentScore === n ? 'var(--primary)' : 'var(--card)'};color:${currentScore === n ? '#fff' : 'var(--text)'};">${n}</button>`).join('') : '<span style="color:var(--text-muted);">-</span>'}
         </div>
       </td>`;
     });

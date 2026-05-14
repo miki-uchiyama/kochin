@@ -10,6 +10,7 @@ export async function GET(request: Request) {
   const records = await sql`
   SELECT 
     dr.id,
+    dr.member_id,
     m.name,
     dr.absent,
     dr.am_absent,

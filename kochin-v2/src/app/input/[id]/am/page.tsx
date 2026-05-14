@@ -1,0 +1,157 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
+
+type Group = { id: number; name: string; coefficient: number };
+
+const SCORE_LABELS = ['集中力', '正確さ', 'スピード', '指示理解', '協調性'];
+const SCORE_DESCRIPTIONS = [
+  ['全く集中できなかった', '集中が長続きしなかった', '時々集中が途切れた', 'よく集中していた', '非常に高い集中力だった'],
+  ['注意してもミスが多かった', '時々ミスがあった', 'ほぼ正確にできた', '丁寧でミスなくできた', '完璧な正確さだった'],
+  ['非常に遅かった', '遅れが目立った', 'スムーズに作業した', '効率的だった', '非常に効率的だった'],
+  ['理解できなかった', '繰り返し説明が必要だった', '一応理解していた', '内容を把握していた', '即座に理解し行動できた'],
+  ['他者との関わり困難', '声掛けが必要だった', '無難に過ごしていた', '自然に関われていた', '積極的に周囲と協力できた'],
+];
+const HOURS = [0.5, 1.0, 1.5, 2.0];
+
+export default function InputAmPage() {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const memberId = params.id;
+  const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
+
+  const [memberName, setMemberName] = useState('');
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [groupId, setGroupId] = useState<number>(0);
+  const [hours, setHours] = useState<number>(2.0);
+  const [scores, setScores] = useState<number[]>([0, 0, 0, 0, 0]);
+  const [amAbsent, setAmAbsent] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/members').then(r => r.json()).then((members: {id: number, name: string}[]) => {
+      const m = members.find(m => m.id === Number(memberId));
+      if (m) setMemberName(m.name);
+    });
+    fetch('/api/groups').then(r => r.json()).then((g: Group[]) => {
+      setGroups(g);
+      if (g.length > 0) setGroupId(g[0].id);
+    });
+  }, [memberId]);
+  
+  useEffect(() => {
+    fetch(`/api/records?date=${date}`)
+      .then(r => r.json())
+      .then(records => {
+        const found = records.find((r: any) => Number(r.member_id) === Number(memberId));
+        if (found) {
+          setAmAbsent(found.am_absent);
+          if (found.am_group_id) setGroupId(found.am_group_id);
+          if (found.am_hours) setHours(Number(found.am_hours));
+          if (found.am_s1) setScores([found.am_s1, found.am_s2, found.am_s3, found.am_s4, found.am_s5]);
+        }
+      });
+  }, [memberId, date]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    await fetch('/api/input', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        member_id: memberId, date, period: 'am',
+        am_absent: amAbsent,
+        group_id: amAbsent ? null : groupId,
+        hours: amAbsent ? null : hours,
+        scores: amAbsent ? null : scores,
+      }),
+    });
+    setSaving(false);
+    router.push(`/input/${memberId}?date=${date}`);
+  };
+
+  const dateStr = new Date(date).toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' });
+  const canSave = amAbsent || !scores.includes(0);
+
+  return (
+    <main style={{ maxWidth: '500px', margin: '0 auto', padding: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+        <button onClick={() => router.push(`/input/${memberId}?date=${date}`)}
+          style={{ padding: '8px 12px', fontSize: '14px', cursor: 'pointer', borderRadius: '6px', border: '1px solid #ccc' }}>
+          ◀ 戻る
+        </button>
+        <h1 style={{ fontSize: '20px', margin: 0 }}>{memberName} - 午前</h1>
+      </div>
+
+      <p style={{ fontSize: '16px', color: '#666', marginBottom: '16px' }}>{dateStr}</p>
+
+      {/* 午前休みボタン */}
+      <button onClick={() => setAmAbsent(!amAbsent)}
+        style={{ width: '100%', padding: '14px', fontSize: '16px', marginBottom: '20px',
+          backgroundColor: amAbsent ? '#e07b00' : '#f5f5f5',
+          color: amAbsent ? 'white' : '#333',
+          border: '2px solid #e07b00', borderRadius: '8px', cursor: 'pointer' }}>
+        {amAbsent ? '✓ 午前休み（選択中）' : '午前休み'}
+      </button>
+
+      {/* 入力項目（午前休みでない場合のみ表示） */}
+      {!amAbsent && <>
+        {/* 作業グループ */}
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', fontSize: '16px', marginBottom: '8px', fontWeight: 'bold' }}>作業グループ</label>
+          <select value={groupId} onChange={e => setGroupId(Number(e.target.value))}
+            style={{ width: '100%', padding: '10px', fontSize: '16px', borderRadius: '8px', border: '1px solid #ccc' }}>
+            {groups.map(g => <option key={g.id} value={g.id}>G{g.id} ({g.coefficient}) {g.name}</option>)}
+          </select>
+        </div>
+
+        {/* 作業時間 */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', fontSize: '16px', marginBottom: '8px', fontWeight: 'bold' }}>作業時間</label>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {HOURS.map(h => (
+              <button key={h} onClick={() => setHours(h)}
+                style={{ flex: 1, padding: '10px', fontSize: '16px', borderRadius: '8px', border: '2px solid #e07b00',
+                  backgroundColor: hours === h ? '#e07b00' : 'white', color: hours === h ? 'white' : '#e07b00',
+                  cursor: 'pointer' }}>
+                {h}h
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 評価項目 */}
+        {SCORE_LABELS.map((label, i) => (
+          <div key={i} style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontSize: '16px', marginBottom: '4px', fontWeight: 'bold' }}>{label}</label>
+            {scores[i] > 0 && (
+              <p style={{ fontSize: '13px', color: '#666', marginBottom: '8px' }}>{scores[i]}:{SCORE_DESCRIPTIONS[i][scores[i]-1]}</p>
+            )}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {[1,2,3,4,5].map(n => (
+                <button key={n} onClick={() => {
+                  const s = [...scores]; s[i] = n; setScores(s);
+                }}
+                  style={{ flex: 1, padding: '10px', fontSize: '16px', borderRadius: '50%', border: '2px solid #e07b00',
+                    backgroundColor: scores[i] === n ? '#e07b00' : 'white', color: scores[i] === n ? 'white' : '#e07b00',
+                    cursor: 'pointer' }}>
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </>}
+
+      <button onClick={handleSave} disabled={saving || !canSave}
+        style={{ width: '100%', padding: '16px', fontSize: '18px',
+          backgroundColor: !canSave ? '#ccc' : '#e07b00',
+          color: 'white', border: 'none', borderRadius: '8px',
+          cursor: !canSave ? 'not-allowed' : 'pointer' }}>
+        {saving ? '保存中...' : !canSave ? '全項目を入力してください' : '保存する'}
+      </button>
+    </main>
+  );
+}

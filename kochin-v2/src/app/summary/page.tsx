@@ -14,9 +14,19 @@ type Summary = {
   total: number;
 };
 
+type Stats = {
+  avgUsers: number;
+  avgMonthlyPay: number;
+  threeMonthAvgUsers: number;
+  threeMonthRate: number;
+  alert: 'none' | 'yellow' | 'red';
+  elapsedMonths: number;
+};
+
 export default function SummaryPage() {
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [summaries, setSummaries] = useState<Summary[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -24,16 +34,13 @@ export default function SummaryPage() {
     fetch(`/api/summary?month=${month}`)
       .then(r => r.json())
       .then(data => {
-        setSummaries(data);
+        setSummaries(data.members);
+        setStats(data.stats);
         setLoading(false);
       });
   }, [month]);
 
   const totalPay = summaries.reduce((a, s) => a + s.total, 0);
-  const avgPay = summaries.length > 0 ? Math.round(totalPay / summaries.length) : 0;
-  const totalWorkDays = summaries.reduce((a, s) => a + s.work_days, 0);
-  const openDays = summaries.length > 0 ? Math.max(...summaries.map(s => s.work_days + s.absent_days)) : 1;
-  const avgUsers = openDays > 0 ? Math.round(totalWorkDays / openDays) : 0;
 
   return (
     <main style={{ padding: '16px', maxWidth: '100%' }}>
@@ -45,12 +52,12 @@ export default function SummaryPage() {
       </div>
 
       {/* 上部サマリー */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '12px' }}>
         {[
           { label: '対象人数', value: `${summaries.length}人` },
           { label: '工賃総額', value: `${totalPay.toLocaleString()}円` },
-          { label: '平均工賃', value: `${avgPay.toLocaleString()}円` },
-          { label: '平均利用者数', value: `${avgUsers}人` },
+          { label: '平均工賃（累積）', value: stats ? `${stats.avgMonthlyPay.toLocaleString()}円` : '-' },
+          { label: '平均利用者数（累積）', value: stats ? `${stats.avgUsers}人` : '-' },
         ].map(item => (
           <div key={item.label} style={{
             background: '#fff', border: '1px solid #e0e0e0', borderRadius: '12px',
@@ -62,27 +69,47 @@ export default function SummaryPage() {
         ))}
       </div>
 
+      {/* 3か月平均利用者数アラート */}
+      {stats && (
+        <div style={{
+          marginBottom: '20px',
+          padding: '14px 18px',
+          borderRadius: '12px',
+          border: `2px solid ${stats.alert === 'red' ? '#e53e3e' : stats.alert === 'yellow' ? '#d69e2e' : '#e0e0e0'}`,
+          background: stats.alert === 'red' ? '#fff5f5' : stats.alert === 'yellow' ? '#fffff0' : '#fff',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+        }}>
+          <span style={{ fontSize: '24px' }}>
+            {stats.alert === 'red' ? '🔴' : stats.alert === 'yellow' ? '⚠️' : '✅'}
+          </span>
+          <div>
+            <div style={{ fontSize: '14px', color: '#666' }}>過去3か月平均利用者数（定員20人）</div>
+            <div style={{ fontSize: '20px', fontWeight: 'bold', color: stats.alert === 'red' ? '#e53e3e' : stats.alert === 'yellow' ? '#d69e2e' : '#333' }}>
+              {stats.threeMonthAvgUsers}人　{stats.threeMonthRate}%
+              {stats.alert === 'red' && '　⚠️ 減算対象の可能性があります'}
+              {stats.alert === 'yellow' && '　注意：定員に近づいています'}
+            </div>
+          </div>
+        </div>
+      )}
+
       {loading && <p>読み込み中...</p>}
 
-      {/* 利用者カード 3列グリッド */}
+      {/* 利用者カード 6列グリッド */}
       {!loading && summaries.length > 0 && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(6, 1fr)',
-          gap: '12px'
-        }}>
+        <div className="summary-grid">
           {summaries.map(s => (
             <div key={s.member_id} style={{
               background: '#fff', border: '1px solid #e0e0e0', borderRadius: '12px', padding: '16px'
             }}>
-              {/* 名前・出欠 */}
               <div style={{ marginBottom: '10px' }}>
                 <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{s.name}</div>
                 <div style={{ fontSize: '14px', color: '#888', marginTop: '4px' }}>
                   出席{s.work_days}日 / 欠席{s.absent_days}日
                 </div>
               </div>
-              {/* 内訳 */}
               <div style={{ fontSize: '15px', lineHeight: '2' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: '#666' }}>基本給</span>
@@ -101,7 +128,6 @@ export default function SummaryPage() {
                   <span>{s.input_count ?? '-'}件</span>
                 </div>
               </div>
-              {/* 合計 */}
               <div style={{
                 marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #eee',
                 textAlign: 'right', fontSize: '20px', fontWeight: 'bold', color: '#c8702a'

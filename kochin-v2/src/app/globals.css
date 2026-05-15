@@ -39,3 +39,6 @@ body {
     grid-template-columns: repeat(6, 1fr);
   }
 }
+body:has(#top-page) header {
+  display: none;
+}

@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <main style={{ maxWidth: '500px', margin: '0 auto', padding: '16px' }}>
+    <main id="top-page" style={{ maxWidth: '500px', margin: '0 auto', padding: '16px' }}>
       <div style={{ textAlign: 'center', marginBottom: '32px', marginTop: '20px' }}>
         <h1 style={{ fontSize: '24px', color: '#e07b00' }}>ぎゅっと。工賃管理</h1>
       </div>

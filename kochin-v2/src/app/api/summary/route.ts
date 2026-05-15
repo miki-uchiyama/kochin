@@ -94,7 +94,7 @@ export async function GET(request: Request) {
   const avgUsers = yearlyOpenDays > 0 ? Math.round((yearlyWorkDaysTotal / yearlyOpenDays) * 10) / 10 : 0;
 
   // 経過月数（4月からの月数）
-  const elapsedMonths = (year - fiscalStartYear) * 12 + (mon - 4);
+  const elapsedMonths = (year - fiscalStartYear) * 12 + (mon - 4) + 1;
 
   // 3か月平均利用者数
   const threeMonthWorkDays = threeMonthRecords.filter(r => !r.absent).length;

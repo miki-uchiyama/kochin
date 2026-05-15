@@ -42,6 +42,11 @@ export default function SummaryPage() {
 
   const totalPay = summaries.reduce((a, s) => a + s.total, 0);
 
+  const alertBg = stats?.alert === 'red' ? '#fff5f5' : stats?.alert === 'yellow' ? '#fffff0' : '#fff';
+  const alertBorder = stats?.alert === 'red' ? '#e53e3e' : stats?.alert === 'yellow' ? '#d69e2e' : '#e0e0e0';
+  const alertColor = stats?.alert === 'red' ? '#e53e3e' : stats?.alert === 'yellow' ? '#d69e2e' : '#333';
+  const alertIcon = stats?.alert === 'red' ? '🔴' : stats?.alert === 'yellow' ? '⚠️' : '✅';
+
   return (
     <main style={{ padding: '16px', maxWidth: '100%' }}>
 
@@ -51,8 +56,10 @@ export default function SummaryPage() {
           style={{ padding: '8px 12px', fontSize: '18px', borderRadius: '8px', border: '1px solid #ccc' }} />
       </div>
 
-      {/* 上部サマリー */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '12px' }}>
+      {/* 上部サマリー 5列 */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', marginBottom: '20px' }}>
+        
+        {/* 1〜4列目：通常カード */}
         {[
           { label: '対象人数', value: `${summaries.length}人` },
           { label: '工賃総額', value: `${totalPay.toLocaleString()}円` },
@@ -67,33 +74,32 @@ export default function SummaryPage() {
             <div style={{ fontSize: '22px', fontWeight: 'bold' }}>{item.value}</div>
           </div>
         ))}
-      </div>
 
-      {/* 3か月平均利用者数アラート */}
-      {stats && (
+        {/* 5列目：3か月平均利用者数（アラート色） */}
         <div style={{
-          marginBottom: '20px',
-          padding: '14px 18px',
+          background: alertBg,
+          border: `2px solid ${alertBorder}`,
           borderRadius: '12px',
-          border: `2px solid ${stats.alert === 'red' ? '#e53e3e' : stats.alert === 'yellow' ? '#d69e2e' : '#e0e0e0'}`,
-          background: stats.alert === 'red' ? '#fff5f5' : stats.alert === 'yellow' ? '#fffff0' : '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
+          padding: '16px',
+          textAlign: 'center'
         }}>
-          <span style={{ fontSize: '24px' }}>
-            {stats.alert === 'red' ? '🔴' : stats.alert === 'yellow' ? '⚠️' : '✅'}
-          </span>
-          <div>
-            <div style={{ fontSize: '14px', color: '#666' }}>過去3か月平均利用者数（定員20人）</div>
-            <div style={{ fontSize: '20px', fontWeight: 'bold', color: stats.alert === 'red' ? '#e53e3e' : stats.alert === 'yellow' ? '#d69e2e' : '#333' }}>
-              {stats.threeMonthAvgUsers}人　{stats.threeMonthRate}%
-              {stats.alert === 'red' && '　⚠️ 減算対象の可能性があります'}
-              {stats.alert === 'yellow' && '　注意：定員に近づいています'}
-            </div>
+          <div style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>
+            3か月平均利用者数 {alertIcon}
           </div>
+          <div style={{ fontSize: '22px', fontWeight: 'bold', color: alertColor }}>
+            {stats ? `${stats.threeMonthAvgUsers}人` : '-'}
+          </div>
+          <div style={{ fontSize: '14px', color: alertColor, marginTop: '4px' }}>
+            {stats ? `定員比 ${stats.threeMonthRate}%` : ''}
+          </div>
+          {stats?.alert === 'red' && (
+            <div style={{ fontSize: '12px', color: '#e53e3e', marginTop: '6px' }}>減算対象の可能性</div>
+          )}
+          {stats?.alert === 'yellow' && (
+            <div style={{ fontSize: '12px', color: '#d69e2e', marginTop: '6px' }}>定員に近づいています</div>
+          )}
         </div>
-      )}
+      </div>
 
       {loading && <p>読み込み中...</p>}
 

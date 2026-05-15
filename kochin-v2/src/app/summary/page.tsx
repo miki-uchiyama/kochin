@@ -68,7 +68,7 @@ export default function SummaryPage() {
       {!loading && summaries.length > 0 && (
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: 'repeat(6, 1fr)',
           gap: '12px'
         }}>
           {summaries.map(s => (

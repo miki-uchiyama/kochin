@@ -52,21 +52,23 @@ export async function GET(request: Request) {
     ability_pay: number;
     base_pay: number;
     attendance_bonus: number;
+    input_count: number;
     total: number;
   }> = {};
 
   records.forEach(r => {
     if (!memberMap[r.member_id]) {
-      memberMap[r.member_id] = {
-        member_id: r.member_id,
-        name: r.name,
-        work_days: 0,
-        absent_days: 0,
-        ability_pay: 0,
-        base_pay: 0,
-        attendance_bonus: 0,
-        total: 0,
-      };
+        memberMap[r.member_id] = {
+            member_id: r.member_id,
+            name: r.name,
+            work_days: 0,
+            absent_days: 0,
+            ability_pay: 0,
+            base_pay: 0,
+            attendance_bonus: 0,
+            input_count: 0,
+            total: 0,
+          };
     }
 
     const m = memberMap[r.member_id];
@@ -74,7 +76,8 @@ export async function GET(request: Request) {
     if (r.absent) {
       m.absent_days++;
     } else {
-      m.work_days++;
+        m.work_days++;
+        m.input_count++;
 
       // 能力給計算
       if (!r.am_absent && r.am_total && r.am_coef && r.am_hours) {

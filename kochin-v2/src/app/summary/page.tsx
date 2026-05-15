@@ -10,6 +10,7 @@ type Summary = {
   ability_pay: number;
   base_pay: number;
   attendance_bonus: number;
+  input_count: number;
   total: number;
 };
 
@@ -28,45 +29,87 @@ export default function SummaryPage() {
       });
   }, [month]);
 
-  return (
-    <main style={{ padding: '20px' }}>
-      <h1 style={{ fontSize: '24px', marginBottom: '16px' }}>集計</h1>
+  const totalPay = summaries.reduce((a, s) => a + s.total, 0);
+  const avgPay = summaries.length > 0 ? Math.round(totalPay / summaries.length) : 0;
+  const totalWorkDays = summaries.reduce((a, s) => a + s.work_days, 0);
+  const openDays = summaries.length > 0 ? Math.max(...summaries.map(s => s.work_days + s.absent_days)) : 1;
+  const avgUsers = openDays > 0 ? Math.round(totalWorkDays / openDays) : 0;
 
-      <div style={{ marginBottom: '20px' }}>
+  return (
+    <main style={{ padding: '16px', maxWidth: '100%' }}>
+
+      {/* 月選択 */}
+      <div style={{ marginBottom: '16px' }}>
         <input type="month" value={month} onChange={e => setMonth(e.target.value)}
-          style={{ padding: '8px', fontSize: '16px', borderRadius: '8px', border: '1px solid #ccc' }} />
+          style={{ padding: '8px 12px', fontSize: '18px', borderRadius: '8px', border: '1px solid #ccc' }} />
+      </div>
+
+      {/* 上部サマリー */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px' }}>
+        {[
+          { label: '対象人数', value: `${summaries.length}人` },
+          { label: '工賃総額', value: `${totalPay.toLocaleString()}円` },
+          { label: '平均工賃', value: `${avgPay.toLocaleString()}円` },
+          { label: '平均利用者数', value: `${avgUsers}人` },
+        ].map(item => (
+          <div key={item.label} style={{
+            background: '#fff', border: '1px solid #e0e0e0', borderRadius: '12px',
+            padding: '16px', textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>{item.label}</div>
+            <div style={{ fontSize: '22px', fontWeight: 'bold' }}>{item.value}</div>
+          </div>
+        ))}
       </div>
 
       {loading && <p>読み込み中...</p>}
 
+      {/* 利用者カード 3列グリッド */}
       {!loading && summaries.length > 0 && (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#f5f5f5' }}>
-                <th style={th}>氏名</th>
-                <th style={th}>出勤日数</th>
-                <th style={th}>欠席日数</th>
-                <th style={th}>能力給</th>
-                <th style={th}>基本給</th>
-                <th style={th}>精勤手当</th>
-                <th style={th}>合計</th>
-              </tr>
-            </thead>
-            <tbody>
-              {summaries.map(s => (
-                <tr key={s.member_id} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={td}>{s.name}</td>
-                  <td style={{ ...td, textAlign: 'right' }}>{s.work_days}日</td>
-                  <td style={{ ...td, textAlign: 'right' }}>{s.absent_days}日</td>
-                  <td style={{ ...td, textAlign: 'right' }}>{s.ability_pay.toLocaleString()}円</td>
-                  <td style={{ ...td, textAlign: 'right' }}>{s.base_pay.toLocaleString()}円</td>
-                  <td style={{ ...td, textAlign: 'right' }}>{s.attendance_bonus.toLocaleString()}円</td>
-                  <td style={{ ...td, textAlign: 'right', fontWeight: 'bold' }}>{s.total.toLocaleString()}円</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '12px'
+        }}>
+          {summaries.map(s => (
+            <div key={s.member_id} style={{
+              background: '#fff', border: '1px solid #e0e0e0', borderRadius: '12px', padding: '16px'
+            }}>
+              {/* 名前・出欠 */}
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{s.name}</div>
+                <div style={{ fontSize: '14px', color: '#888', marginTop: '4px' }}>
+                  出席{s.work_days}日 / 欠席{s.absent_days}日
+                </div>
+              </div>
+              {/* 内訳 */}
+              <div style={{ fontSize: '15px', lineHeight: '2' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#666' }}>基本給</span>
+                  <span>{s.base_pay.toLocaleString()}円</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#666' }}>能力給</span>
+                  <span>{s.ability_pay.toLocaleString()}円</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#666' }}>精勤手当</span>
+                  <span>{s.attendance_bonus.toLocaleString()}円</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#666' }}>入力件数</span>
+                  <span>{s.input_count ?? '-'}件</span>
+                </div>
+              </div>
+              {/* 合計 */}
+              <div style={{
+                marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #eee',
+                textAlign: 'right', fontSize: '20px', fontWeight: 'bold', color: '#c8702a'
+              }}>
+                {s.total.toLocaleString()}円
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -76,6 +119,3 @@ export default function SummaryPage() {
     </main>
   );
 }
-
-const th = { padding: '12px 8px', textAlign: 'left' as const, fontSize: '15px', fontWeight: 'bold', whiteSpace: 'nowrap' as const };
-const td = { padding: '8px', verticalAlign: 'middle' as const, fontSize: '15px' };

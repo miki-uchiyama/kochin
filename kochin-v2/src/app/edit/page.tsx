@@ -38,6 +38,16 @@ export default function EditPage() {
     setRecords(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
   };
 
+  const handleDelete = async (id: number, name: string) => {
+    if (!confirm(`${name}のデータを削除しますか？`)) return;
+    const res = await fetch(`/api/records?id=${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      setRecords(prev => prev.filter(r => r.id !== id));
+      setMessage(`${name}のデータを削除しました`);
+      setTimeout(() => setMessage(''), 3000);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     const res = await fetch('/api/records', {
@@ -98,6 +108,7 @@ export default function EditPage() {
           <thead>
             <tr style={{ backgroundColor: '#f5f5f5' }}>
               <th style={th}>氏名</th>
+              <th style={th}>削除</th>
               {tab === 'am' && <th style={th}>午前</th>}
               {tab === 'pm' && <th style={th}>午後</th>}
               {tab !== 'life' && <><th style={th}>グループ</th><th style={th}>時間</th></>}
@@ -110,6 +121,13 @@ export default function EditPage() {
             {records.map(r => (
               <tr key={r.id} style={{ borderBottom: '1px solid #eee' }}>
                 <td style={td}>{r.name}</td>
+<td style={td}>
+  <button onClick={() => handleDelete(r.id, r.name)}
+    style={{ padding: '6px 12px', fontSize: '14px', borderRadius: '6px',
+      border: 'none', cursor: 'pointer', backgroundColor: '#e53935', color: 'white' }}>
+    削除
+  </button>
+</td>
                 {tab === 'am' && (
   <td style={td}>
     <button

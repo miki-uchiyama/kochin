@@ -69,3 +69,11 @@ export async function PUT(request: Request) {
   
     return NextResponse.json({ ok: true });
   }
+  export async function DELETE(request: Request) {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) return NextResponse.json({ ok: false });
+    await sql`DELETE FROM scores WHERE record_id = ${id}`;
+    await sql`DELETE FROM daily_records_new WHERE id = ${id}`;
+    return NextResponse.json({ ok: true });
+  }

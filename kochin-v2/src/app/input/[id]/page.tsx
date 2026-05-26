@@ -79,17 +79,18 @@ export default function InputMemberPage() {
       <p style={{ fontSize: '16px', color: '#666', marginBottom: '20px' }}>{dateStr}</p>
 
       {isAbsent ? (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-    <div style={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', textAlign: 'center', fontSize: '18px', color: '#666' }}>
-      全日欠席済み
-    </div>
-    <button onClick={handleCancelAbsent} disabled={saving}
-      style={{ padding: '16px', fontSize: '16px', backgroundColor: '#e07b00',
-        color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
-      {saving ? '処理中...' : '欠席を取り消す'}
-    </button>
-  </div>
-) : (        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ padding: '16px', backgroundColor: '#FFEBEE', borderRadius: '8px', textAlign: 'center', fontSize: '18px', color: '#C62828' }}>
+            全日欠席済み
+          </div>
+          <button onClick={handleCancelAbsent} disabled={saving}
+            style={{ padding: '16px', fontSize: '16px', backgroundColor: '#e07b00',
+              color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+            {saving ? '処理中...' : '欠席を取り消す'}
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <button onClick={() => router.push(`/input/${memberId}/am?date=${date}`)}
             style={btnStyle(hasAm, '#4CAF50')}>
             <span>午前の入力</span>
@@ -106,7 +107,7 @@ export default function InputMemberPage() {
             {hasLife && <span style={{ fontSize: '14px' }}>✓ 入力済み</span>}
           </button>
           <button onClick={handleAbsent} disabled={saving}
-            style={{ padding: '16px', fontSize: '16px', backgroundColor: '#ccc',
+            style={{ padding: '16px', fontSize: '16px', backgroundColor: '#E53935',
               color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
             {saving ? '保存中...' : '全日欠席'}
           </button>

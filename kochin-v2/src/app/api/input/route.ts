@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   }
 
   // 午前・午後の入力
-  const { period, group_id, hours, scores } = body;
+  const { period, group_id, hours, scores, memo } = body;
 
   const existing = await sql`
     SELECT id FROM daily_records_new 
@@ -49,28 +49,30 @@ export async function POST(request: Request) {
     if (period === 'am') {
       await sql`
         UPDATE daily_records_new SET
-          am_group_id = ${group_id}, am_hours = ${hours}, am_absent = ${body.am_absent || false}
+          am_group_id = ${group_id}, am_hours = ${hours}, am_absent = ${body.am_absent || false},
+          am_memo = ${memo || null}
         WHERE id = ${recordId}
       `;
     } else if (period === 'pm') {
       await sql`
         UPDATE daily_records_new SET
-          pm_group_id = ${group_id}, pm_hours = ${hours}, pm_absent = ${body.pm_absent || false}
+          pm_group_id = ${group_id}, pm_hours = ${hours}, pm_absent = ${body.pm_absent || false},
+          pm_memo = ${memo || null}
         WHERE id = ${recordId}
       `;
     }
   } else {
     if (period === 'am') {
       const result = await sql`
-        INSERT INTO daily_records_new (member_id, date, am_group_id, am_hours)
-        VALUES (${member_id}, ${date}, ${group_id}, ${hours})
+        INSERT INTO daily_records_new (member_id, date, am_group_id, am_hours, am_memo)
+        VALUES (${member_id}, ${date}, ${group_id}, ${hours}, ${memo || null})
         RETURNING id
       `;
       recordId = result[0].id;
     } else if (period === 'pm') {
       const result = await sql`
-        INSERT INTO daily_records_new (member_id, date, pm_group_id, pm_hours)
-        VALUES (${member_id}, ${date}, ${group_id}, ${hours})
+        INSERT INTO daily_records_new (member_id, date, pm_group_id, pm_hours, pm_memo)
+        VALUES (${member_id}, ${date}, ${group_id}, ${hours}, ${memo || null})
         RETURNING id
       `;
       recordId = result[0].id;

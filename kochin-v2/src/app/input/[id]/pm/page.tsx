@@ -28,6 +28,7 @@ export default function InputPmPage() {
   const [hours, setHours] = useState<number>(2.0);
   const [scores, setScores] = useState<number[]>([0, 0, 0, 0, 0]);
   const [pmAbsent, setPmAbsent] = useState(false);
+  const [memo, setMemo] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function InputPmPage() {
           if (found.pm_group_id) setGroupId(found.pm_group_id);
           if (found.pm_hours) setHours(Number(found.pm_hours));
           if (found.pm_s1) setScores([found.pm_s1, found.pm_s2, found.pm_s3, found.pm_s4, found.pm_s5]);
+          if (found.pm_memo) setMemo(found.pm_memo);
         }
       });
   }, [memberId, date]);
@@ -66,6 +68,7 @@ export default function InputPmPage() {
         group_id: pmAbsent ? null : groupId,
         hours: pmAbsent ? null : hours,
         scores: pmAbsent ? null : scores,
+        memo: pmAbsent ? null : memo,
       }),
     });
     setSaving(false);
@@ -102,6 +105,15 @@ export default function InputPmPage() {
             style={{ width: '100%', padding: '10px', fontSize: '16px', borderRadius: '8px', border: '1px solid #ccc' }}>
             {groups.map(g => <option key={g.id} value={g.id}>G{g.id} ({g.coefficient}) {g.name}</option>)}
           </select>
+        </div>
+
+        {/* 作業内容メモ */}
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', fontSize: '16px', marginBottom: '8px', fontWeight: 'bold' }}>作業内容</label>
+          <textarea value={memo} onChange={e => setMemo(e.target.value)}
+            placeholder="作業内容を入力してください"
+            style={{ width: '100%', padding: '10px', fontSize: '16px', borderRadius: '8px', border: '1px solid #ccc',
+              minHeight: '80px', resize: 'vertical', boxSizing: 'border-box' }} />
         </div>
 
         <div style={{ marginBottom: '20px' }}>

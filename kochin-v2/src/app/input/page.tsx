@@ -32,7 +32,7 @@ export default function InputPage() {
   const getStatus = (memberId: number) => {
     const r = records.find(r => Number(r.member_id) === memberId);
     if (!r) return { label: '未入力', color: '#fff', textColor: '#333', border: '1px solid #ddd' };
-    if (r.absent) return { label: '欠席', color: '#f5f5f5', textColor: '#999', border: '1px solid #ddd' };
+    if (r.absent) return { label: '欠席', color: '#FFEBEE', textColor: '#C62828', border: '2px solid #E53935' };
     
     const hasAm = !!r.am_s1 || r.am_absent;
     const hasPm = !!r.pm_s1 || r.pm_absent;

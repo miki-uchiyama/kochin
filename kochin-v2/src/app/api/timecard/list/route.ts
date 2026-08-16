@@ -3,7 +3,7 @@ import { neon } from '@neondatabase/serverless';
 
 const sql = neon(process.env.DATABASE_URL!);
 
-// 指定日の打刻一覧を取得
+// 指定日の打刻一覧を取得（全利用者を表示、未打刻も含む）
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -14,10 +14,15 @@ export async function GET(request: NextRequest) {
     }
 
     const records = await sql`
-      SELECT t.id, t.member_id, m.name, t.clock_in, t.clock_out
-      FROM timecard t
-      JOIN members m ON t.member_id = m.id
-      WHERE t.date = ${date}
+      SELECT
+        m.id AS member_id,
+        m.name,
+        t.id AS timecard_id,
+        t.clock_in,
+        t.clock_out
+      FROM members m
+      LEFT JOIN timecard t
+        ON t.member_id = m.id AND t.date = ${date}
       ORDER BY m.name
     `;
 

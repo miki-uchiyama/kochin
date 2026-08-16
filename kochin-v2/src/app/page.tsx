@@ -36,6 +36,18 @@ export default function Home() {
             color: 'white', borderRadius: '8px', textDecoration: 'none', display: 'block' }}>
           集計・工賃計算
         </Link>
+
+        <Link href="/timecard"
+          style={{ padding: '20px', fontSize: '18px', textAlign: 'center', backgroundColor: '#673AB7',
+            color: 'white', borderRadius: '8px', textDecoration: 'none', display: 'block' }}>
+          タイムカード
+        </Link>
+        <Link href="/timecard/register"
+          style={{ padding: '20px', fontSize: '18px', textAlign: 'center', backgroundColor: '#673AB7',
+            color: 'white', borderRadius: '8px', textDecoration: 'none', display: 'block' }}>
+          カード登録
+        </Link>
+
         <Link href="/settings"
           style={{ padding: '20px', fontSize: '18px', textAlign: 'center', backgroundColor: '#9E9E9E',
             color: 'white', borderRadius: '8px', textDecoration: 'none', display: 'block' }}>

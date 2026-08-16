@@ -48,6 +48,12 @@ export default function Home() {
           カード登録
         </Link>
 
+        <Link href="/timecard/list"
+          style={{ padding: '20px', fontSize: '18px', textAlign: 'center', backgroundColor: '#673AB7',
+            color: 'white', borderRadius: '8px', textDecoration: 'none', display: 'block' }}>
+          タイムカード一覧
+        </Link>
+
         <Link href="/settings"
           style={{ padding: '20px', fontSize: '18px', textAlign: 'center', backgroundColor: '#9E9E9E',
             color: 'white', borderRadius: '8px', textDecoration: 'none', display: 'block' }}>

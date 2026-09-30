@@ -32,6 +32,7 @@ export default function TimecardListPage() {
   const [editIn, setEditIn] = useState('');
   const [editOut, setEditOut] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -75,6 +76,22 @@ export default function TimecardListPage() {
     }
   };
 
+  const handleDelete = async (r: Record) => {
+    const ok = window.confirm(`${r.name} さんの ${date} の打刻記録を削除しますか？`);
+    if (!ok) return;
+
+    setDeletingId(r.member_id);
+    const res = await fetch('/api/timecard/update', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ member_id: r.member_id, date }),
+    });
+    setDeletingId(null);
+    if (res.ok) {
+      load();
+    }
+  };
+
   return (
     <div style={{ maxWidth: '500px', margin: '0 auto', padding: '16px' }}>
       <h1 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '16px' }}>
@@ -107,6 +124,7 @@ export default function TimecardListPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {records.map((r) => {
           const isEditing = editingId === r.member_id;
+          const hasRecord = Boolean(r.clock_in || r.clock_out);
           return (
             <div
               key={r.member_id}
@@ -143,19 +161,37 @@ export default function TimecardListPage() {
                       </span>
                     </div>
                   </div>
-                  <button
-                    onClick={() => startEdit(r)}
-                    style={{
-                      fontSize: '14px',
-                      color: '#2196F3',
-                      border: '1px solid #2196F3',
-                      borderRadius: '6px',
-                      padding: '6px 14px',
-                      backgroundColor: 'white',
-                    }}
-                  >
-                    修正
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={() => startEdit(r)}
+                      style={{
+                        fontSize: '14px',
+                        color: '#2196F3',
+                        border: '1px solid #2196F3',
+                        borderRadius: '6px',
+                        padding: '6px 14px',
+                        backgroundColor: 'white',
+                      }}
+                    >
+                      修正
+                    </button>
+                    {hasRecord && (
+                      <button
+                        onClick={() => handleDelete(r)}
+                        disabled={deletingId === r.member_id}
+                        style={{
+                          fontSize: '14px',
+                          color: '#f44336',
+                          border: '1px solid #f44336',
+                          borderRadius: '6px',
+                          padding: '6px 14px',
+                          backgroundColor: 'white',
+                        }}
+                      >
+                        {deletingId === r.member_id ? '削除中...' : '削除'}
+                      </button>
+                    )}
+                  </div>
                 </>
               )}
 

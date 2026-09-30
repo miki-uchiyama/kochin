@@ -12,12 +12,13 @@ export async function GET(request: NextRequest) {
 
     // memberとmonthが両方なければ、利用者一覧だけ返す
     if (!member_id || !month) {
-      const members = await sql`SELECT id, name FROM members ORDER BY name`;
+      const members = await sql`SELECT id, name, active FROM members ORDER BY name`;
       return NextResponse.json({ members });
     }
 
+    // date はタイムゾーン変換でずれないよう、文字列("YYYY-MM-DD")として取得する
     const records = await sql`
-      SELECT date, clock_in, clock_out
+      SELECT TO_CHAR(date, 'YYYY-MM-DD') AS date, clock_in, clock_out
       FROM timecard
       WHERE member_id = ${member_id}
       AND date >= ${month + '-01'}

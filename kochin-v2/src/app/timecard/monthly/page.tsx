@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-type Member = { id: number; name: string };
+type Member = { id: number; name: string; active: boolean | null };
 type Record = { date: string; clock_in: string | null; clock_out: string | null };
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
@@ -11,6 +11,11 @@ function formatTime(value: string | null) {
   if (!value) return null;
   const d = new Date(value);
   return d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+}
+
+// データベースから返る日付を "YYYY-MM-DD" に揃える（時刻が付いてくる場合があるため）
+function toDateKey(value: string) {
+  return value.slice(0, 10);
 }
 
 function getDaysInMonth(month: string) {
@@ -32,6 +37,7 @@ export default function MonthlyTimecardPage() {
   });
   const [records, setRecords] = useState<Record[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
 
   useEffect(() => {
     fetch('/api/timecard/monthly')
@@ -48,8 +54,9 @@ export default function MonthlyTimecardPage() {
       .finally(() => setLoading(false));
   }, [memberId, month]);
 
-  const recordMap = new Map(records.map((r) => [r.date, r]));
+  const recordMap = new Map(records.map((r) => [toDateKey(r.date), r]));
   const days = month ? getDaysInMonth(month) : [];
+  const visibleMembers = showInactive ? members : members.filter((m) => m.active !== false);
   const attendedCount = records.filter((r) => r.clock_in).length;
 
   return (
@@ -65,8 +72,8 @@ export default function MonthlyTimecardPage() {
           style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '12px', fontSize: '18px' }}
         >
           <option value="">利用者を選択してください</option>
-          {members.map((m) => (
-            <option key={m.id} value={m.id}>{m.name}</option>
+          {visibleMembers.map((m) => (
+            <option key={m.id} value={m.id}>{m.name}{m.active === false ? '（退所）' : ''}</option>
           ))}
         </select>
 
@@ -76,6 +83,15 @@ export default function MonthlyTimecardPage() {
           onChange={(e) => setMonth(e.target.value)}
           style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '12px', fontSize: '18px' }}
         />
+
+        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', color: '#555' }}>
+          <input
+            type="checkbox"
+            checked={showInactive}
+            onChange={(e) => setShowInactive(e.target.checked)}
+          />
+          退所した利用者も表示する
+        </label>
       </div>
 
       {!memberId && (

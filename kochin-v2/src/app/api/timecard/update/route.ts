@@ -42,3 +42,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'エラーが発生しました' }, { status: 500 });
   }
 }
+
+// 打刻記録を削除する（間違えて打刻した場合など）
+export async function DELETE(request: NextRequest) {
+  try {
+    const { member_id, date } = await request.json();
+
+    if (!member_id || !date) {
+      return NextResponse.json({ error: '利用者と日付が必要です' }, { status: 400 });
+    }
+
+    await sql`
+      DELETE FROM timecard WHERE member_id = ${member_id} AND date = ${date}
+    `;
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: 'エラーが発生しました' }, { status: 500 });
+  }
+}

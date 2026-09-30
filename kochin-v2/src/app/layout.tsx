@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Link from "next/link";
+import TopHeaderLink from "./TopHeaderLink";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ぎゅっと。工賃管理",
-  description: "ぎゅっと。工賃管理システム",
+  title: "ぎゅっと。タイムカード",
+  description: "ぎゅっと。タイムカードシステム",
 };
 
 export default function RootLayout({
@@ -29,25 +29,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <header style={{
-          padding: '10px 16px',
-          borderBottom: '1px solid #e0e0e0',
-          background: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-        }}>
-          <Link href="/" style={{
-            fontSize: '15px',
-            color: '#c8702a',
-            textDecoration: 'none',
-            border: '1px solid #c8702a',
-            padding: '4px 12px',
-            borderRadius: '6px',
-          }}>
-            ⬅ トップへ
-          </Link>
-        </header>
+        <TopHeaderLink />
         {children}
       </body>
     </html>

@@ -216,13 +216,47 @@ export default function TimecardPage() {
             key={m.id}
             onClick={() => setSelected(m)}
             style={{
-              aspectRatio: '1', border: '2px solid #e07b00', borderRadius: '20px',
-              backgroundColor: 'white', color: '#333', fontSize: '18px', fontWeight: 'bold',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              padding: '8px', textAlign: 'center',
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              border: 'none', backgroundColor: 'transparent',
+              cursor: 'pointer', padding: 0, gap: '6px',
             }}
           >
-            {m.name}
+            <div style={{
+              position: 'relative', width: '100%', aspectRatio: '1',
+              border: '2px solid #e07b00', borderRadius: '20px',
+              backgroundColor: 'white', overflow: 'hidden',
+            }}>
+              <img
+                src={`/api/timecard/icon/${m.id}`}
+                alt=""
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                  const fallback = (e.target as HTMLImageElement).nextElementSibling as HTMLElement | null;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+                style={{
+                  position: 'absolute', inset: 0, width: '100%', height: '100%',
+                  objectFit: 'cover',
+                }}
+              />
+              <div
+                style={{
+                  display: 'none', position: 'absolute', inset: 0,
+                  backgroundColor: '#f0f0f0', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '40px',
+                }}
+              >
+                👤
+              </div>
+            </div>
+            <span
+              style={{
+                color: '#333', fontSize: '15px', fontWeight: 'bold',
+                textAlign: 'center', lineHeight: 1.2,
+              }}
+            >
+              {m.name}
+            </span>
           </button>
         ))}
       </div>

@@ -3,11 +3,13 @@ import { neon } from '@neondatabase/serverless';
 
 const sql = neon(process.env.DATABASE_URL!);
 
-// 利用者一覧を取得（登録画面のプルダウン用）
+// 利用者一覧を取得（タイムカード画面用）※無効になった人は除く
 export async function GET() {
   try {
     const members = await sql`
-      SELECT id, name FROM members ORDER BY name
+      SELECT id, name FROM members
+      WHERE active IS DISTINCT FROM false
+      ORDER BY name
     `;
     return NextResponse.json(members);
   } catch (error) {

@@ -177,29 +177,21 @@ export default function TimecardPage() {
             disabled={saving}
             style={{
               width: '160px', height: '160px', border: 'none', borderRadius: '24px',
-              backgroundColor: '#7986cb',
               backgroundImage: 'url(/break-start.png)', backgroundSize: 'cover',
-              backgroundPosition: 'center', cursor: 'pointer', color: 'white',
-              fontSize: '18px', fontWeight: 'bold',
+              backgroundPosition: 'center', cursor: 'pointer',
               boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
             }}
-          >
-            休憩開始
-          </button>
+          />
           <button
             onClick={() => handlePunch('break_end')}
             disabled={saving}
             style={{
               width: '160px', height: '160px', border: 'none', borderRadius: '24px',
-              backgroundColor: '#ffb74d',
               backgroundImage: 'url(/break-end.png)', backgroundSize: 'cover',
-              backgroundPosition: 'center', cursor: 'pointer', color: 'white',
-              fontSize: '18px', fontWeight: 'bold',
+              backgroundPosition: 'center', cursor: 'pointer',
               boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
             }}
-          >
-            休憩終了
-          </button>
+          />
         </div>
       </div>
     );

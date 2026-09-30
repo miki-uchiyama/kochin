@@ -223,8 +223,9 @@ export default function TimecardPage() {
           >
             <div style={{
               position: 'relative', width: '100%', aspectRatio: '1',
-              border: '2px solid #e07b00', borderRadius: '20px',
+              borderRadius: '20px',
               backgroundColor: 'white', overflow: 'hidden',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
             }}>
               <img
                 src={`/api/timecard/icon/${m.id}`}

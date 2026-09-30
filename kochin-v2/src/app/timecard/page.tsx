@@ -3,24 +3,26 @@
 import { useEffect, useState } from 'react';
 
 type Member = { id: number; name: string };
+type PunchType = 'clock_in' | 'clock_out' | 'break_start' | 'break_end';
 type ResultType = {
-  type: 'clock_in' | 'clock_out';
+  type: PunchType;
   name: string;
 } | null;
 
 // 日本語の自然な声を選んで読み上げる
 function speakJapanese(text: string) {
-  const voices = window.speechSynthesis.getVoices();
-  // より自然な「Online (Natural)」音声を最優先で探す（リストの順番を優先する）
-  const preferredNames = ['七海', '圭太', 'Online (Natural)', 'Nanami', 'Haruka', 'Ayumi', 'Google 日本語'];
+  // 日本語の音声だけに絞ってから探す（他の言語の声を誤って選ばないように）
+  const jaVoices = window.speechSynthesis.getVoices().filter((v) => v.lang.startsWith('ja'));
+  // より自然な「Online (Natural)」音声（七海）を最優先で探す
+  const preferredNames = ['七海', 'Online (Natural)', 'Nanami', 'Haruka', 'Ayumi', 'Google 日本語'];
 
   let voice: SpeechSynthesisVoice | undefined;
   for (const name of preferredNames) {
-    voice = voices.find((v) => v.name.includes(name));
+    voice = jaVoices.find((v) => v.name.includes(name));
     if (voice) break;
   }
   if (!voice) {
-    voice = voices.find((v) => v.lang === 'ja-JP');
+    voice = jaVoices[0];
   }
 
   const msg = new SpeechSynthesisUtterance(text);
@@ -30,6 +32,20 @@ function speakJapanese(text: string) {
   msg.rate = 0.95;
   window.speechSynthesis.speak(msg);
 }
+
+const messages: Record<PunchType, { label: string; voice: string; icon: string }> = {
+  clock_in: { label: '✅ おはようございます', voice: 'おはようございます', icon: '/clock-in.png' },
+  clock_out: { label: '👋 おつかれさまでした', voice: 'おつかれさまでした', icon: '/clock-out.png' },
+  break_start: { label: '💤 ゆっくり休んでください', voice: 'ゆっくり休んでください', icon: '/break-start.png' },
+  break_end: { label: '🌟 おかえりなさい', voice: 'おかえりなさい', icon: '/break-end.png' },
+};
+
+const endpoints: Record<PunchType, string> = {
+  clock_in: '/api/timecard/manual',
+  clock_out: '/api/timecard/manual',
+  break_start: '/api/timecard/break-start',
+  break_end: '/api/timecard/break-end',
+};
 
 export default function TimecardPage() {
   const [members, setMembers] = useState<Member[]>([]);
@@ -47,14 +63,19 @@ export default function TimecardPage() {
     window.speechSynthesis.getVoices();
   }, []);
 
-  const handlePunch = async (type: 'clock_in' | 'clock_out') => {
+  const handlePunch = async (type: PunchType) => {
     if (!selected || saving) return;
     setSaving(true);
 
-    const res = await fetch('/api/timecard/manual', {
+    const body: { member_id: number; type?: string } = { member_id: selected.id };
+    if (type === 'clock_in' || type === 'clock_out') {
+      body.type = type;
+    }
+
+    const res = await fetch(endpoints[type], {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ member_id: selected.id, type }),
+      body: JSON.stringify(body),
     });
 
     const data = await res.json();
@@ -70,7 +91,7 @@ export default function TimecardPage() {
     setResult({ type, name: selected.name });
     setSelected(null);
 
-    speakJapanese(type === 'clock_in' ? 'おはようございます' : 'おつかれさまでした');
+    speakJapanese(messages[type].voice);
 
     setTimeout(() => setResult(null), 3000);
   };
@@ -86,7 +107,7 @@ export default function TimecardPage() {
           {result.name} さん
         </p>
         <p style={{ fontSize: '32px', color: '#4CAF50' }}>
-          {result.type === 'clock_in' ? '✅ おはようございます' : '👋 おつかれさまでした'}
+          {messages[result.type].label}
         </p>
       </div>
     );
@@ -104,7 +125,7 @@ export default function TimecardPage() {
     );
   }
 
-  // 出勤・退勤選択画面
+  // 出勤・退勤・休憩選択画面
   if (selected) {
     return (
       <div style={{
@@ -127,7 +148,7 @@ export default function TimecardPage() {
           {selected.name} さん
         </p>
 
-        <div style={{ display: 'flex', gap: '32px' }}>
+        <div style={{ display: 'flex', gap: '32px', marginBottom: '32px' }}>
           <button
             onClick={() => handlePunch('clock_in')}
             disabled={saving}
@@ -148,6 +169,37 @@ export default function TimecardPage() {
               boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
             }}
           />
+        </div>
+
+        <div style={{ display: 'flex', gap: '24px' }}>
+          <button
+            onClick={() => handlePunch('break_start')}
+            disabled={saving}
+            style={{
+              width: '160px', height: '160px', border: 'none', borderRadius: '24px',
+              backgroundColor: '#7986cb',
+              backgroundImage: 'url(/break-start.png)', backgroundSize: 'cover',
+              backgroundPosition: 'center', cursor: 'pointer', color: 'white',
+              fontSize: '18px', fontWeight: 'bold',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            }}
+          >
+            休憩開始
+          </button>
+          <button
+            onClick={() => handlePunch('break_end')}
+            disabled={saving}
+            style={{
+              width: '160px', height: '160px', border: 'none', borderRadius: '24px',
+              backgroundColor: '#ffb74d',
+              backgroundImage: 'url(/break-end.png)', backgroundSize: 'cover',
+              backgroundPosition: 'center', cursor: 'pointer', color: 'white',
+              fontSize: '18px', fontWeight: 'bold',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            }}
+          >
+            休憩終了
+          </button>
         </div>
       </div>
     );

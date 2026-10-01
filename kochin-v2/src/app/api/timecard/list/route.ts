@@ -19,7 +19,18 @@ export async function GET(request: NextRequest) {
         m.name,
         t.id AS timecard_id,
         t.clock_in,
-        t.clock_out
+        t.clock_out,
+        COALESCE(
+          (
+            SELECT json_agg(
+              json_build_object('break_start', b.break_start, 'break_end', b.break_end)
+              ORDER BY b.break_start
+            )
+            FROM breaks b
+            WHERE b.member_id = m.id AND b.date = ${date}
+          ),
+          '[]'
+        ) AS breaks
       FROM members m
       LEFT JOIN timecard t
         ON t.member_id = m.id AND t.date = ${date}

@@ -10,7 +10,7 @@ const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 function formatTime(value: string | null) {
   if (!value) return null;
   const d = new Date(value);
-  return d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
 }
 
 // データベースから返る日付を "YYYY-MM-DD" に揃える（時刻が付いてくる場合があるため）

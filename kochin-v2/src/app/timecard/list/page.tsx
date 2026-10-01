@@ -2,26 +2,39 @@
 
 import { useEffect, useState } from 'react';
 
+type Break = {
+  break_start: string | null;
+  break_end: string | null;
+};
+
 type Record = {
   member_id: number;
   name: string;
   timecard_id: number | null;
   clock_in: string | null;
   clock_out: string | null;
+  breaks: Break[];
 };
 
 function formatTime(value: string | null) {
   if (!value) return '未打刻';
   const d = new Date(value);
-  return d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
 }
 
 function toInputTime(value: string | null) {
   if (!value) return '';
   const d = new Date(value);
-  const h = String(d.getHours()).padStart(2, '0');
-  const m = String(d.getMinutes()).padStart(2, '0');
-  return `${h}:${m}`;
+  // 編集欄に入れる時刻は、どの端末で見ても必ず日本時間になるようにする
+  const parts = new Intl.DateTimeFormat('ja-JP', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Tokyo',
+  }).formatToParts(d);
+  const h = parts.find((p) => p.type === 'hour')?.value ?? '00';
+  const m = parts.find((p) => p.type === 'minute')?.value ?? '00';
+  return `${h.padStart(2, '0')}:${m}`;
 }
 
 export default function TimecardListPage() {
@@ -160,6 +173,19 @@ export default function TimecardListPage() {
                         {formatTime(r.clock_out)}
                       </span>
                     </div>
+                  </div>
+
+                  <div style={{ fontSize: '14px', color: '#555', marginBottom: '10px' }}>
+                    <span style={{ color: '#888', marginRight: '6px' }}>休憩</span>
+                    {r.breaks && r.breaks.length > 0 ? (
+                      r.breaks.map((b, i) => (
+                        <span key={i} style={{ marginRight: '12px' }}>
+                          {formatTime(b.break_start)}〜{b.break_end ? formatTime(b.break_end) : '休憩中'}
+                        </span>
+                      ))
+                    ) : (
+                      <span style={{ color: '#bbb' }}>0分</span>
+                    )}
                   </div>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button

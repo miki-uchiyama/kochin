@@ -18,12 +18,26 @@ export async function GET(request: NextRequest) {
 
     // date はタイムゾーン変換でずれないよう、文字列("YYYY-MM-DD")として取得する
     const records = await sql`
-      SELECT TO_CHAR(date, 'YYYY-MM-DD') AS date, clock_in, clock_out
-      FROM timecard
-      WHERE member_id = ${member_id}
-      AND date >= ${month + '-01'}
-      AND date < (${month + '-01'}::date + INTERVAL '1 month')
-      ORDER BY date
+      SELECT
+        TO_CHAR(t.date, 'YYYY-MM-DD') AS date,
+        t.clock_in,
+        t.clock_out,
+        COALESCE(
+          (
+            SELECT json_agg(
+              json_build_object('break_start', b.break_start, 'break_end', b.break_end)
+              ORDER BY b.break_start
+            )
+            FROM breaks b
+            WHERE b.member_id = t.member_id AND b.date = t.date
+          ),
+          '[]'
+        ) AS breaks
+      FROM timecard t
+      WHERE t.member_id = ${member_id}
+      AND t.date >= ${month + '-01'}
+      AND t.date < (${month + '-01'}::date + INTERVAL '1 month')
+      ORDER BY t.date
     `;
 
     return NextResponse.json({ records });

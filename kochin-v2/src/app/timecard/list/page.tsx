@@ -106,12 +106,12 @@ export default function TimecardListPage() {
   };
 
   return (
-    <div style={{ maxWidth: '500px', margin: '0 auto', padding: '16px' }}>
+    <div style={{ width: '100%', maxWidth: '1100px', margin: '0 auto', padding: '16px', boxSizing: 'border-box' }}>
       <h1 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '16px' }}>
         タイムカード一覧
       </h1>
 
-      <div style={{ marginBottom: '16px' }}>
+      <div style={{ marginBottom: '16px', maxWidth: '320px' }}>
         <input
           type="date"
           value={date}
@@ -134,7 +134,13 @@ export default function TimecardListPage() {
         <p style={{ textAlign: 'center', color: '#999', padding: '24px' }}>利用者が登録されていません</p>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+          gap: '10px',
+        }}
+      >
         {records.map((r) => {
           const isEditing = editingId === r.member_id;
           const hasRecord = Boolean(r.clock_in || r.clock_out);

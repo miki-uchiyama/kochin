@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 
 type Member = { id: number; name: string; active: boolean | null };
-type Record = { date: string; clock_in: string | null; clock_out: string | null };
+type Break = { break_start: string | null; break_end: string | null };
+type Record = { date: string; clock_in: string | null; clock_out: string | null; breaks: Break[] };
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -121,6 +122,7 @@ export default function MonthlyTimecardPage() {
               const isWeekend = d.getDay() === 0 || d.getDay() === 6;
               const clockIn = r ? formatTime(r.clock_in) : null;
               const clockOut = r ? formatTime(r.clock_out) : null;
+              const breaks = r?.breaks || [];
 
               return (
                 <div
@@ -133,6 +135,7 @@ export default function MonthlyTimecardPage() {
                     border: '1px solid #eee',
                     borderRadius: '8px',
                     padding: '10px 14px',
+                    gap: '8px',
                   }}
                 >
                   <div style={{
@@ -142,9 +145,24 @@ export default function MonthlyTimecardPage() {
                   }}>
                     {Number(date.split('-')[2])}日({weekday})
                   </div>
-                  <div style={{ fontSize: '14px', color: clockIn ? '#333' : '#bbb' }}>
-                    {clockIn ? `出勤 ${clockIn}` : '未打刻'}
-                    {clockOut ? `　退勤 ${clockOut}` : ''}
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '14px', color: clockIn ? '#333' : '#bbb' }}>
+                      {clockIn ? `出勤 ${clockIn}` : '未打刻'}
+                      {clockOut ? `　退勤 ${clockOut}` : ''}
+                    </div>
+                    {clockIn && (
+                      <div style={{ fontSize: '12px', color: '#999', marginTop: '2px' }}>
+                        休憩{' '}
+                        {breaks.length > 0
+                          ? breaks
+                              .map(
+                                (b) =>
+                                  `${formatTime(b.break_start)}〜${b.break_end ? formatTime(b.break_end) : '休憩中'}`
+                              )
+                              .join('、')
+                          : '0分'}
+                      </div>
+                    )}
                   </div>
                 </div>
               );

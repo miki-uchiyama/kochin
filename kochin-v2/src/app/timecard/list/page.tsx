@@ -38,7 +38,7 @@ function toInputTime(value: string | null) {
 }
 
 export default function TimecardListPage() {
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(() => new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().split('T')[0]);
   const [records, setRecords] = useState<Record[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);

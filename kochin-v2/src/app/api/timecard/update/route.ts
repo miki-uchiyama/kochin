@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
+import { jstToUtcWall } from '../jst';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -12,9 +13,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '利用者と日付が必要です' }, { status: 400 });
     }
 
-    // clock_in / clock_out は "HH:MM" 形式で受け取り、日付と組み合わせてTIMESTAMPにする
-    const clockInValue = clock_in ? `${date} ${clock_in}:00` : null;
-    const clockOutValue = clock_out ? `${date} ${clock_out}:00` : null;
+    // clock_in / clock_out は日本時間の "HH:MM" 形式で受け取る。
+    // DBにはUTCで保存するため、ここで明示的に変換する（9時間引く）
+    const clockInValue = clock_in ? jstToUtcWall(date, clock_in) : null;
+    const clockOutValue = clock_out ? jstToUtcWall(date, clock_out) : null;
 
     // すでに記録があるか確認
     const existing = await sql`

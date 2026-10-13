@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
+import { todayJst } from '../jst';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -18,7 +19,8 @@ export async function POST(request: NextRequest) {
     }
     const name = member[0].name;
 
-    const today = new Date().toISOString().split('T')[0];
+    // 日本時間の「今日」
+    const today = todayJst();
 
     // すでに休憩中（終了していない休憩）がないか確認
     const openBreak = await sql`
@@ -34,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     await sql`
       INSERT INTO breaks (member_id, date, break_start)
-      VALUES (${member_id}, ${today}, NOW())
+      VALUES (${member_id}, ${today}, (NOW() AT TIME ZONE 'UTC'))
     `;
 
     return NextResponse.json({ type: 'break_start', name });

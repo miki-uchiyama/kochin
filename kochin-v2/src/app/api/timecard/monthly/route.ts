@@ -17,15 +17,19 @@ export async function GET(request: NextRequest) {
     }
 
     // date はタイムゾーン変換でずれないよう、文字列("YYYY-MM-DD")として取得する
+    // 時刻はDBでUTCとして保存されているので、"…Z" 付きの文字列で返す
     const records = await sql`
       SELECT
         TO_CHAR(t.date, 'YYYY-MM-DD') AS date,
-        t.clock_in,
-        t.clock_out,
+        to_char(t.clock_in, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS clock_in,
+        to_char(t.clock_out, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS clock_out,
         COALESCE(
           (
             SELECT json_agg(
-              json_build_object('break_start', b.break_start, 'break_end', b.break_end)
+              json_build_object(
+                'break_start', to_char(b.break_start, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+                'break_end', to_char(b.break_end, 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+              )
               ORDER BY b.break_start
             )
             FROM breaks b

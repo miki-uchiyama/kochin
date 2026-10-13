@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
+import { todayJst } from '../jst';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -18,7 +19,8 @@ export async function POST(request: NextRequest) {
     }
     const name = member[0].name;
 
-    const today = new Date().toISOString().split('T')[0];
+    // 日本時間の「今日」
+    const today = todayJst();
 
     const existing = await sql`
       SELECT * FROM timecard
@@ -33,11 +35,11 @@ export async function POST(request: NextRequest) {
       if (existing.length === 0) {
         await sql`
           INSERT INTO timecard (member_id, clock_in, date)
-          VALUES (${member_id}, NOW(), ${today})
+          VALUES (${member_id}, (NOW() AT TIME ZONE 'UTC'), ${today})
         `;
       } else {
         await sql`
-          UPDATE timecard SET clock_in = NOW()
+          UPDATE timecard SET clock_in = (NOW() AT TIME ZONE 'UTC')
           WHERE member_id = ${member_id} AND date = ${today}
         `;
       }
@@ -50,7 +52,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'すでに退勤打刻済みです' }, { status: 400 });
       }
       await sql`
-        UPDATE timecard SET clock_out = NOW()
+        UPDATE timecard SET clock_out = (NOW() AT TIME ZONE 'UTC')
         WHERE member_id = ${member_id} AND date = ${today}
       `;
       return NextResponse.json({ type: 'clock_out', name });

@@ -37,6 +37,7 @@ export default function MonthlyTimecardPage() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
   const [records, setRecords] = useState<Record[]>([]);
+  const [absences, setAbsences] = useState<{ [date: string]: string }>({});
   const [loading, setLoading] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
 
@@ -51,7 +52,10 @@ export default function MonthlyTimecardPage() {
     setLoading(true);
     fetch(`/api/timecard/monthly?member_id=${memberId}&month=${month}`)
       .then((res) => res.json())
-      .then((data) => setRecords(data.records || []))
+      .then((data) => {
+        setRecords(data.records || []);
+        setAbsences(data.absences || {});
+      })
       .finally(() => setLoading(false));
   }, [memberId, month]);
 
@@ -123,6 +127,7 @@ export default function MonthlyTimecardPage() {
               const clockIn = r ? formatTime(r.clock_in) : null;
               const clockOut = r ? formatTime(r.clock_out) : null;
               const breaks = r?.breaks || [];
+              const absence = absences[date];
 
               return (
                 <div
@@ -150,6 +155,11 @@ export default function MonthlyTimecardPage() {
                       {clockIn ? `出勤 ${clockIn}` : '未打刻'}
                       {clockOut ? `　退勤 ${clockOut}` : ''}
                     </div>
+                    {absence !== undefined && (
+                      <div style={{ fontSize: '12px', color: '#a05a00', marginTop: '2px' }}>
+                        予定外欠席：{absence || '（理由未入力）'}
+                      </div>
+                    )}
                     {clockIn && (
                       <div style={{ fontSize: '12px', color: '#999', marginTop: '2px' }}>
                         休憩{' '}

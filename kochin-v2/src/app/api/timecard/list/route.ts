@@ -43,7 +43,45 @@ export async function GET(request: NextRequest) {
       ORDER BY m.name
     `;
 
-    return NextResponse.json(records);
+    // 個別支援記録（ポータル）から、予定外欠席の理由と確認内容を取得して付ける
+    // ポータルが止まっていても打刻の表示は止めないよう、失敗しても空で続ける
+    const absenceMap = new Map<string, { reason: string; note: string }>();
+    try {
+      const portalUrl = process.env.PORTAL_URL ?? 'https://mams-hug-portal.vercel.app';
+      const res = await fetch(`${portalUrl}/api/support/basic?date=${date}`, {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(5000),
+      });
+      if (res.ok) {
+        const supports = await res.json();
+        if (Array.isArray(supports)) {
+          for (const s of supports) {
+            if (s.attendance === '欠席' && s.absence_type === '予定外欠席') {
+              // 姓と名の間のスペース（半角・全角）の違いを無視して突き合わせる
+              const key = String(s.member_name ?? '').replace(/[\s\u3000]/g, '');
+              absenceMap.set(key, {
+                reason: s.absence_reason ?? '',
+                note: s.absence_reason_other ?? '',
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('個別支援記録の取得に失敗:', e);
+    }
+
+    const withAbsence = records.map((r) => {
+      const key = String(r.name ?? '').replace(/[\s\u3000]/g, '');
+      const a = absenceMap.get(key);
+      return {
+        ...r,
+        absence_reason: a ? a.reason : null,
+        absence_note: a ? a.note : null,
+      };
+    });
+
+    return NextResponse.json(withAbsence);
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'エラーが発生しました' }, { status: 500 });

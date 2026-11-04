@@ -44,7 +44,39 @@ export async function GET(request: NextRequest) {
       ORDER BY t.date
     `;
 
-    return NextResponse.json({ records });
+    // 個別支援記録（ポータル）から、この利用者の予定外欠席の理由を月ぶんまとめて取得する
+    // ポータルが止まっていても打刻の表示は止めないよう、失敗しても空で続ける
+    const absences: Record<string, string> = {};
+    try {
+      const found = await sql`SELECT name FROM members WHERE id = ${member_id}`;
+      const norm = (v: unknown) => String(v ?? '').replace(/[\s\u3000]/g, '');
+      const target = found.length > 0 ? norm(found[0].name) : '';
+      if (target) {
+        const portalUrl = process.env.PORTAL_URL ?? 'https://mams-hug-portal.vercel.app';
+        const res = await fetch(`${portalUrl}/api/support/basic?date=${month}`, {
+          cache: 'no-store',
+          signal: AbortSignal.timeout(5000),
+        });
+        if (res.ok) {
+          const supports = await res.json();
+          if (Array.isArray(supports)) {
+            for (const s of supports) {
+              if (
+                s.attendance === '欠席' &&
+                s.absence_type === '予定外欠席' &&
+                norm(s.member_name) === target
+              ) {
+                absences[String(s.record_date).slice(0, 10)] = s.absence_reason ?? '';
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('個別支援記録の取得に失敗:', e);
+    }
+
+    return NextResponse.json({ records, absences });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'エラーが発生しました' }, { status: 500 });

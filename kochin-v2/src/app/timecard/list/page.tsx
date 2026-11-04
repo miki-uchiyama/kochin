@@ -14,6 +14,8 @@ type Record = {
   clock_in: string | null;
   clock_out: string | null;
   breaks: Break[];
+  absence_reason?: string | null;
+  absence_note?: string | null;
 };
 
 function formatTime(value: string | null) {
@@ -193,6 +195,29 @@ export default function TimecardListPage() {
                       <span style={{ color: '#bbb' }}>0分</span>
                     )}
                   </div>
+                  {r.absence_reason !== null && r.absence_reason !== undefined && (
+                    <div
+                      style={{
+                        fontSize: '14px',
+                        color: '#7a4a00',
+                        backgroundColor: '#fff4e0',
+                        border: '1px solid #f0c987',
+                        borderRadius: '6px',
+                        padding: '8px 10px',
+                        marginBottom: '10px',
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>予定外欠席</div>
+                      <div>
+                        <span style={{ color: '#a07030', marginRight: '6px' }}>理由</span>
+                        {r.absence_reason || '（未入力）'}
+                      </div>
+                      <div style={{ whiteSpace: 'pre-wrap' }}>
+                        <span style={{ color: '#a07030', marginRight: '6px' }}>確認内容</span>
+                        {r.absence_note || '（未入力）'}
+                      </div>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button
                       onClick={() => startEdit(r)}

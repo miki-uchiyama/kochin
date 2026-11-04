@@ -53,6 +53,8 @@ export default function TimecardListPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editIn, setEditIn] = useState('');
   const [editOut, setEditOut] = useState('');
+  const [editBreaks, setEditBreaks] = useState<{ start: string; end: string }[]>([]);
+  const [saveError, setSaveError] = useState('');
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
@@ -73,6 +75,8 @@ export default function TimecardListPage() {
     setEditingId(r.member_id);
     setEditIn(toInputTime(r.clock_in));
     setEditOut(toInputTime(r.clock_out));
+    setEditBreaks((r.breaks || []).map((b) => ({ start: toInputTime(b.break_start), end: toInputTime(b.break_end) })));
+    setSaveError('');
   };
 
   const cancelEdit = () => {
@@ -91,10 +95,31 @@ export default function TimecardListPage() {
         clock_out: editOut || null,
       }),
     });
+    if (!res.ok) {
+      setSaving(false);
+      setSaveError('出勤・退勤の保存に失敗しました');
+      return;
+    }
+
+    // 休憩は、入力の空欄（開始が空の行）を除いて、まるごと入れ替えて保存する
+    const breaksRes = await fetch('/api/timecard/breaks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        member_id,
+        date,
+        breaks: editBreaks
+          .filter((b) => b.start)
+          .map((b) => ({ start: b.start, end: b.end || null })),
+      }),
+    });
     setSaving(false);
-    if (res.ok) {
+    if (breaksRes.ok) {
       setEditingId(null);
       load();
+    } else {
+      const data = await breaksRes.json().catch(() => ({}));
+      setSaveError(data.error || '休憩の保存に失敗しました');
     }
   };
 
@@ -292,6 +317,51 @@ export default function TimecardListPage() {
                       />
                     </div>
                   </div>
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={{ fontSize: '13px', color: '#888', display: 'block', marginBottom: '4px' }}>
+                      休憩（終了を空にすると「休憩中」になります）
+                    </label>
+                    {editBreaks.length === 0 && (
+                      <div style={{ fontSize: '14px', color: '#bbb', marginBottom: '6px' }}>休憩なし</div>
+                    )}
+                    {editBreaks.map((b, i) => (
+                      <div key={i} style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '6px' }}>
+                        <input
+                          type="time"
+                          value={b.start}
+                          onChange={(e) =>
+                            setEditBreaks(editBreaks.map((x, j) => (j === i ? { ...x, start: e.target.value } : x)))
+                          }
+                          style={{ flex: 1, minWidth: 0, padding: '8px', border: '1px solid #ccc', borderRadius: '6px', fontSize: '16px' }}
+                        />
+                        <span>〜</span>
+                        <input
+                          type="time"
+                          value={b.end}
+                          onChange={(e) =>
+                            setEditBreaks(editBreaks.map((x, j) => (j === i ? { ...x, end: e.target.value } : x)))
+                          }
+                          style={{ flex: 1, minWidth: 0, padding: '8px', border: '1px solid #ccc', borderRadius: '6px', fontSize: '16px' }}
+                        />
+                        <button
+                          onClick={() => setEditBreaks(editBreaks.filter((_, j) => j !== i))}
+                          aria-label="この休憩を削除"
+                          style={{ padding: '6px 10px', color: '#f44336', border: '1px solid #f44336', borderRadius: '6px', backgroundColor: 'white' }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => setEditBreaks([...editBreaks, { start: '', end: '' }])}
+                      style={{ fontSize: '14px', color: '#2196F3', border: '1px solid #2196F3', borderRadius: '6px', padding: '6px 14px', backgroundColor: 'white' }}
+                    >
+                      ＋ 休憩を追加
+                    </button>
+                  </div>
+                  {saveError && (
+                    <div style={{ fontSize: '14px', color: '#f44336', marginBottom: '8px' }}>{saveError}</div>
+                  )}
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button
                       onClick={() => saveEdit(r.member_id)}

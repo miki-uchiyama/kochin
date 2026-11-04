@@ -40,6 +40,27 @@ export default function MonthlyTimecardPage() {
   const [absences, setAbsences] = useState<{ [date: string]: string }>({});
   const [loading, setLoading] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
+  // 表示の切り替え：スマホ（狭い画面）は列、PC（広い画面）はカレンダーを最初に出す
+  const [view, setView] = useState<'list' | 'calendar'>('list');
+
+  useEffect(() => {
+    let saved: string | null = null;
+    try {
+      saved = window.localStorage.getItem('timecard-monthly-view');
+    } catch {}
+    if (saved === 'list' || saved === 'calendar') {
+      setView(saved);
+    } else {
+      setView(window.innerWidth >= 768 ? 'calendar' : 'list');
+    }
+  }, []);
+
+  const changeView = (v: 'list' | 'calendar') => {
+    setView(v);
+    try {
+      window.localStorage.setItem('timecard-monthly-view', v);
+    } catch {}
+  };
 
   useEffect(() => {
     fetch('/api/timecard/monthly')
@@ -65,12 +86,12 @@ export default function MonthlyTimecardPage() {
   const attendedCount = records.filter((r) => r.clock_in).length;
 
   return (
-    <div style={{ maxWidth: '500px', margin: '0 auto', padding: '16px' }}>
+    <div style={{ maxWidth: view === 'calendar' ? '1000px' : '500px', margin: '0 auto', padding: '16px' }}>
       <h1 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '16px' }}>
         月別タイムカード
       </h1>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px', maxWidth: '500px' }}>
         <select
           value={memberId}
           onChange={(e) => setMemberId(e.target.value)}
@@ -88,6 +109,27 @@ export default function MonthlyTimecardPage() {
           onChange={(e) => setMonth(e.target.value)}
           style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '12px', fontSize: '18px' }}
         />
+
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {([['list', '列表示'], ['calendar', 'カレンダー表示']] as const).map(([v, label]) => (
+            <button
+              key={v}
+              onClick={() => changeView(v)}
+              style={{
+                flex: 1,
+                padding: '10px',
+                fontSize: '15px',
+                fontWeight: 'bold',
+                borderRadius: '8px',
+                border: '1px solid #e07b00',
+                backgroundColor: view === v ? '#e07b00' : 'white',
+                color: view === v ? 'white' : '#e07b00',
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', color: '#555' }}>
           <input
@@ -118,6 +160,7 @@ export default function MonthlyTimecardPage() {
             出勤日数：{attendedCount}日
           </div>
 
+          {view === 'list' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {days.map((date) => {
               const r = recordMap.get(date);
@@ -178,6 +221,67 @@ export default function MonthlyTimecardPage() {
               );
             })}
           </div>
+          )}
+
+          {view === 'calendar' && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: '4px' }}>
+              {WEEKDAYS.map((w, i) => (
+                <div
+                  key={w}
+                  style={{
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                    fontSize: '14px',
+                    padding: '6px 0',
+                    color: i === 0 || i === 6 ? '#e07b00' : '#ccc',
+                  }}
+                >
+                  {w}
+                </div>
+              ))}
+              {Array.from({ length: new Date(Number(month.split('-')[0]), Number(month.split('-')[1]) - 1, 1).getDay() }).map((_, i) => (
+                <div key={`blank-${i}`} />
+              ))}
+              {days.map((date) => {
+                const r = recordMap.get(date);
+                const dow = new Date(date).getDay();
+                const isWeekend = dow === 0 || dow === 6;
+                const clockIn = r ? formatTime(r.clock_in) : null;
+                const clockOut = r ? formatTime(r.clock_out) : null;
+                const absence = absences[date];
+                return (
+                  <div
+                    key={date}
+                    style={{
+                      backgroundColor: 'white',
+                      border: '1px solid #eee',
+                      borderRadius: '6px',
+                      padding: '6px',
+                      minHeight: '84px',
+                      fontSize: '12px',
+                      color: '#333',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', fontSize: '14px', color: isWeekend ? '#e07b00' : '#333', marginBottom: '2px' }}>
+                      {Number(date.split('-')[2])}
+                    </div>
+                    {clockIn && (
+                      <div>
+                        <div>出 {clockIn}</div>
+                        <div style={{ color: clockOut ? '#333' : '#e07b00' }}>退 {clockOut ?? '未打刻'}</div>
+                      </div>
+                    )}
+                    {absence !== undefined && (
+                      <div style={{ color: '#a05a00', backgroundColor: '#fff4e0', borderRadius: '4px', padding: '2px 4px', marginTop: '2px' }}>
+                        予定外欠席：{absence || '理由未入力'}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </>
       )}
     </div>

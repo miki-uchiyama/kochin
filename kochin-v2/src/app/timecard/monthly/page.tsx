@@ -15,6 +15,13 @@ const ABSENCE_COLORS: { [type: string]: { color: string; bg: string } } = {
 };
 const DAY_OFF_COLOR = { color: '#1d5fa8', bg: '#e3f0fd' };
 
+// 月（YYYY-MM）を、指定した月数だけ前後に動かす
+function shiftMonth(value: string, months: number) {
+  if (!value) return value;
+  const [y, m] = value.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1 + months, 1)).toISOString().slice(0, 7);
+}
+
 function formatTime(value: string | null) {
   if (!value) return null;
   const d = new Date(value);
@@ -112,12 +119,20 @@ export default function MonthlyTimecardPage() {
           ))}
         </select>
 
-        <input
-          type="month"
-          value={month}
-          onChange={(e) => setMonth(e.target.value)}
-          style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '12px', fontSize: '18px' }}
-        />
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button onClick={() => setMonth(shiftMonth(month, -1))} aria-label="前の月" style={{ padding: '0 16px', fontSize: '20px', fontWeight: 'bold', color: '#e07b00', backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '8px' }}>
+            ◀
+          </button>
+          <input
+            type="month"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '12px', fontSize: '18px', flex: 1, minWidth: 0 }}
+          />
+          <button onClick={() => setMonth(shiftMonth(month, 1))} aria-label="次の月" style={{ padding: '0 16px', fontSize: '20px', fontWeight: 'bold', color: '#e07b00', backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '8px' }}>
+            ▶
+          </button>
+        </div>
 
         <div style={{ display: 'flex', gap: '8px' }}>
           {([['list', '列表示'], ['calendar', 'カレンダー表示']] as const).map(([v, label]) => (

@@ -18,6 +18,13 @@ type Record = {
   absence_note?: string | null;
 };
 
+// 日付（YYYY-MM-DD）を、指定した日数だけ前後に動かす
+function shiftDate(value: string, days: number) {
+  if (!value) return value;
+  const [y, m, d] = value.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
 function formatTime(value: string | null) {
   if (!value) return '未打刻';
   const d = new Date(value);
@@ -113,7 +120,10 @@ export default function TimecardListPage() {
         タイムカード一覧
       </h1>
 
-      <div style={{ marginBottom: '16px', maxWidth: '320px' }}>
+      <div style={{ marginBottom: '16px', maxWidth: '420px', display: 'flex', gap: '8px' }}>
+        <button onClick={() => setDate(shiftDate(date, -1))} aria-label="前の日" style={{ padding: '0 16px', fontSize: '20px', fontWeight: 'bold', color: '#e07b00', backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '8px' }}>
+          ◀
+        </button>
         <input
           type="date"
           value={date}
@@ -123,9 +133,13 @@ export default function TimecardListPage() {
             borderRadius: '8px',
             padding: '12px',
             fontSize: '18px',
-            width: '100%',
+            flex: 1,
+            minWidth: 0,
           }}
         />
+        <button onClick={() => setDate(shiftDate(date, 1))} aria-label="次の日" style={{ padding: '0 16px', fontSize: '20px', fontWeight: 'bold', color: '#e07b00', backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '8px' }}>
+          ▶
+        </button>
       </div>
 
       {loading && (

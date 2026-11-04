@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     // 個別支援記録（ポータル）から、この利用者の予定外欠席の理由を月ぶんまとめて取得する
     // ポータルが止まっていても打刻の表示は止めないよう、失敗しても空で続ける
-    const absences: Record<string, string> = {};
+    const absences: Record<string, { type: string; reason: string }> = {};
     try {
       const found = await sql`SELECT name FROM members WHERE id = ${member_id}`;
       const norm = (v: unknown) => String(v ?? '').replace(/[\s\u3000]/g, '');
@@ -63,10 +63,13 @@ export async function GET(request: NextRequest) {
             for (const s of supports) {
               if (
                 s.attendance === '欠席' &&
-                s.absence_type === '予定外欠席' &&
+                (s.absence_type === '予定外欠席' || s.absence_type === '予定欠席') &&
                 norm(s.member_name) === target
               ) {
-                absences[String(s.record_date).slice(0, 10)] = s.absence_reason ?? '';
+                absences[String(s.record_date).slice(0, 10)] = {
+                  type: s.absence_type,
+                  reason: s.absence_reason ?? '',
+                };
               }
             }
           }
@@ -76,7 +79,23 @@ export async function GET(request: NextRequest) {
       console.error('個別支援記録の取得に失敗:', e);
     }
 
-    return NextResponse.json({ records, absences });
+    // 公休（工賃システムと同じデータベースに入っている）をその月ぶん取得する
+    // 失敗しても打刻の表示は止めない
+    let dayOffs: string[] = [];
+    try {
+      const rows = await sql`
+        SELECT to_char(date, 'YYYY-MM-DD') AS date
+        FROM daily_records_new
+        WHERE member_id = ${member_id}
+          AND day_off = true
+          AND to_char(date, 'YYYY-MM') = ${month}
+      `;
+      dayOffs = rows.map((r) => String(r.date));
+    } catch (e) {
+      console.error('公休の取得に失敗:', e);
+    }
+
+    return NextResponse.json({ records, absences, dayOffs });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'エラーが発生しました' }, { status: 500 });

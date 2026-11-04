@@ -8,6 +8,13 @@ type Record = { date: string; clock_in: string | null; clock_out: string | null;
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
+// 欠席・公休の色分け（予定外欠席＝オレンジ、予定欠席＝紫、公休＝青）
+const ABSENCE_COLORS: { [type: string]: { color: string; bg: string } } = {
+  予定外欠席: { color: '#a05a00', bg: '#fff4e0' },
+  予定欠席: { color: '#6a3fa0', bg: '#f1e8fb' },
+};
+const DAY_OFF_COLOR = { color: '#1d5fa8', bg: '#e3f0fd' };
+
 function formatTime(value: string | null) {
   if (!value) return null;
   const d = new Date(value);
@@ -37,7 +44,8 @@ export default function MonthlyTimecardPage() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
   const [records, setRecords] = useState<Record[]>([]);
-  const [absences, setAbsences] = useState<{ [date: string]: string }>({});
+  const [absences, setAbsences] = useState<{ [date: string]: { type: string; reason: string } }>({});
+  const [dayOffs, setDayOffs] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
   // 表示の切り替え：スマホ（狭い画面）は列、PC（広い画面）はカレンダーを最初に出す
@@ -76,6 +84,7 @@ export default function MonthlyTimecardPage() {
       .then((data) => {
         setRecords(data.records || []);
         setAbsences(data.absences || {});
+        setDayOffs(data.dayOffs || []);
       })
       .finally(() => setLoading(false));
   }, [memberId, month]);
@@ -160,6 +169,18 @@ export default function MonthlyTimecardPage() {
             出勤日数：{attendedCount}日
           </div>
 
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px', fontSize: '12px' }}>
+            {([
+              ['予定外欠席', ABSENCE_COLORS['予定外欠席']],
+              ['予定欠席', ABSENCE_COLORS['予定欠席']],
+              ['公休', DAY_OFF_COLOR],
+            ] as const).map(([label, c]) => (
+              <span key={label} style={{ color: c.color, backgroundColor: c.bg, borderRadius: '4px', padding: '2px 8px' }}>
+                {label}
+              </span>
+            ))}
+          </div>
+
           {view === 'list' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {days.map((date) => {
@@ -171,6 +192,7 @@ export default function MonthlyTimecardPage() {
               const clockOut = r ? formatTime(r.clock_out) : null;
               const breaks = r?.breaks || [];
               const absence = absences[date];
+              const isDayOff = dayOffs.includes(date);
 
               return (
                 <div
@@ -199,9 +221,12 @@ export default function MonthlyTimecardPage() {
                       {clockOut ? `　退勤 ${clockOut}` : ''}
                     </div>
                     {absence !== undefined && (
-                      <div style={{ fontSize: '12px', color: '#a05a00', marginTop: '2px' }}>
-                        予定外欠席：{absence || '（理由未入力）'}
+                      <div style={{ fontSize: '12px', color: ABSENCE_COLORS[absence.type]?.color, marginTop: '2px' }}>
+                        {absence.type === '予定外欠席' ? `${absence.type}：${absence.reason || '（理由未入力）'}` : absence.type}
                       </div>
+                    )}
+                    {isDayOff && (
+                      <div style={{ fontSize: '12px', color: DAY_OFF_COLOR.color, marginTop: '2px' }}>公休</div>
                     )}
                     {clockIn && (
                       <div style={{ fontSize: '12px', color: '#999', marginTop: '2px' }}>
@@ -249,6 +274,7 @@ export default function MonthlyTimecardPage() {
                 const clockIn = r ? formatTime(r.clock_in) : null;
                 const clockOut = r ? formatTime(r.clock_out) : null;
                 const absence = absences[date];
+                const isDayOff = dayOffs.includes(date);
                 return (
                   <div
                     key={date}
@@ -273,8 +299,29 @@ export default function MonthlyTimecardPage() {
                       </div>
                     )}
                     {absence !== undefined && (
-                      <div style={{ color: '#a05a00', backgroundColor: '#fff4e0', borderRadius: '4px', padding: '2px 4px', marginTop: '2px' }}>
-                        予定外欠席：{absence || '理由未入力'}
+                      <div
+                        style={{
+                          color: ABSENCE_COLORS[absence.type]?.color,
+                          backgroundColor: ABSENCE_COLORS[absence.type]?.bg,
+                          borderRadius: '4px',
+                          padding: '2px 4px',
+                          marginTop: '2px',
+                        }}
+                      >
+                        {absence.type === '予定外欠席' ? `${absence.type}：${absence.reason || '理由未入力'}` : absence.type}
+                      </div>
+                    )}
+                    {isDayOff && (
+                      <div
+                        style={{
+                          color: DAY_OFF_COLOR.color,
+                          backgroundColor: DAY_OFF_COLOR.bg,
+                          borderRadius: '4px',
+                          padding: '2px 4px',
+                          marginTop: '2px',
+                        }}
+                      >
+                        公休
                       </div>
                     )}
                   </div>

@@ -191,8 +191,10 @@ export default function MonthlyTimecardPage() {
               const clockIn = r ? formatTime(r.clock_in) : null;
               const clockOut = r ? formatTime(r.clock_out) : null;
               const breaks = r?.breaks || [];
-              const absence = absences[date];
-              const isDayOff = dayOffs.includes(date);
+              // 打刻がある日は公休を出さない／公休の日は予定欠席を出さない
+              const isDayOff = dayOffs.includes(date) && !clockIn;
+              const absenceRaw = absences[date];
+              const absence = absenceRaw && !(isDayOff && absenceRaw.type === '予定欠席') ? absenceRaw : undefined;
 
               return (
                 <div
@@ -273,8 +275,10 @@ export default function MonthlyTimecardPage() {
                 const isWeekend = dow === 0 || dow === 6;
                 const clockIn = r ? formatTime(r.clock_in) : null;
                 const clockOut = r ? formatTime(r.clock_out) : null;
-                const absence = absences[date];
-                const isDayOff = dayOffs.includes(date);
+                // 打刻がある日は公休を出さない／公休の日は予定欠席を出さない
+                const isDayOff = dayOffs.includes(date) && !clockIn;
+                const absenceRaw = absences[date];
+                const absence = absenceRaw && !(isDayOff && absenceRaw.type === '予定欠席') ? absenceRaw : undefined;
                 return (
                   <div
                     key={date}
